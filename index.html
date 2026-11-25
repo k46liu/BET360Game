@@ -655,6 +655,7 @@ function screenYear() {
     <span class="small muted">Show:</span>
     ${filters.map(([k, l]) => `<button type="button" class="chip" data-f="${k}" aria-pressed="${S.filter === k}">${l}</button>`).join("")}
   </div>
+  <div class="who-helps small muted" style="margin-bottom:.7rem">Who each card helps: ${PERSONAS.map(p => `<span class="pdot" style="background:${p.color};color:#fff" aria-hidden="true">${p.name[0]}</span> ${p.name}`).join(" &nbsp;")} &nbsp;|&nbsp; <b>solid</b> = a lot, <b>faded</b> = some, <b>dashed</b> = little or none</div>
   <div class="cards">${list.map(c => cardHtml(c, y)).join("")}</div>
   <div class="commitbar">
     <div><b id="spent">${spent()}</b> of <b>${S.budget}</b> points selected <span class="muted small" id="selnames"></span></div>
