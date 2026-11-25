@@ -708,6 +708,11 @@ function insights(ev, prev, y) {
     out.push(["info", `<b>Reported losses went up while true harm fell.</b> More victims are reporting, so you can finally see the problem. In a real ministry, this is the year the headlines turn against you. Stay the course.`]);
   }
   const evNow = eventOf(y);
+  if (y > 1 && S.forecast[y]) {
+    const decoy = EVENTS[S.forecast[y].find(i => i !== ORDER[y - 1])];
+    const preparedDecoy = readyFor(y - 1, S.picks) ? [] : decoy.counters.filter(id => isActive(id, y, S.picks));
+    out.push(["info", `<b>Forecast check:</b> last year's forecast for ${START_YEAR + y} was ${evNow.label} or ${decoy.label}. It turned out to be <b>${evNow.label}</b>.${preparedDecoy.length ? ` You prepared for ${decoy.label}, so ${preparedDecoy.map(id => CARD(id).name).join(" and ")} isn't wasted: it's already protecting people, and you'll be ready if ${decoy.label} arrives in a later year.` : ""}`]);
+  }
   if (y === 1) out.push(["info", `<b>Year one:</b> no one could have prepared for this year's trend. The planning screen forecasts two possible trends for next year, so you can try to get ahead.`]);
   else if (readyFor(y - 1, S.picks)) out.push(["good", `<b>You were ready.</b> ${evNow.counters.filter(id => isActive(id, y, S.picks)).map(id => CARD(id).name).join(" and ")} blunted this year's new scam trend, so it never fully took hold.`]);
   else out.push(["warn", `<b>${START_YEAR + y}'s trend (${evNow.label}) caught Ontario unprepared.</b> It is countered only by ${evNow.counters.map(id => CARD(id).name).join(" or ")}, and neither was working yet, so it will keep doing damage in later years.${CARDS.some(c => isActive(c.id, y, S.picks) && EVENTS.some(e => e.counters.includes(c.id))) ? " The counter-measures you do have cover other trends." : ""}`]);
