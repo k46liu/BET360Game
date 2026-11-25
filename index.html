@@ -483,7 +483,9 @@ function evaluate(y, picks) {
   return { y, personas, avg, rate, trueHarm, reported, approval };
 }
 
-function riskLabel(h) { return h >= 0.9 ? "High" : h >= 0.55 ? "Medium" : "Low"; }
+// Risk compares each person's harm with what it would be this year if you had done nothing.
+function relHarm(pid, ev) { const base = evaluate(ev.y, {}).personas.find(x => x.id === pid).harm; return ev.personas.find(x => x.id === pid).harm / base; }
+function riskLabel(ratio) { return ratio >= 0.8 ? "High" : ratio >= 0.55 ? "Medium" : "Low"; }
 
 /* ===================== HELPERS ===================== */
 
@@ -587,7 +589,8 @@ function screenHowTo() {
       <h3>6. How you're judged</h3>
       <p class="small">At the end of 2031 you get one of five results, based on how far true harm fell compared with doing nothing, and how evenly the four people are protected:</p>
       <p class="small"><b>Systems Shifter</b> &middot; Structural Reformer &middot; Getting There &middot; Busy but Shallow &middot; Headline Chaser</p>
-      <p class="small muted">The top result needs depth <i>and</i> equity. Watch the equity check after each year: no single measure protects everyone.</p>
+      <p class="small"><b>Each person's risk</b> compares their harm with what it would be if you had done nothing: <span class="risk Low">Low</span> at least 45% less, <span class="risk Medium">Medium</span> 20% to 45% less, <span class="risk High">High</span> under 20% less.</p>
+      <p class="small muted">The top result needs depth <i>and</i> equity. Getting all four people to Low earns a special badge, and no single measure protects everyone.</p>
     </div>
   </div>
 
@@ -790,8 +793,8 @@ function insights(ev, prev, y) {
   else if (y < YEARS && ev.approval > APPROVAL_HIGH) out.push(["good", `<b>Approval is ${Math.round(ev.approval)}%.</b> You get 1 extra point next year. Will you spend it on what is popular, or on what works?`]);
   const anyActive = CARDS.some(c => c.id !== "council" && isActive(c.id, y, S.picks));
   if (!anyActive) out.push(["info", `<b>Nothing is working yet.</b> Measures you funded this year start in a later year (see "Works in" on each card), so this year's results are the same as doing nothing.`]);
-  const lp = [...ev.personas].sort((a, b) => a.protection - b.protection);
-  if (anyActive && lp[lp.length - 1].protection - lp[0].protection > 0.3) out.push(["bad", `<b>Equity check:</b> ${personaById(lp[0].id).name} is ${pct(lp[0].protection)} protected while ${personaById(lp[lp.length - 1].id).name} is ${pct(lp[lp.length - 1].protection)}. Who is your plan leaving behind?`]);
+  const lp = ev.personas.map(p => ({ id: p.id, protection: 1 - relHarm(p.id, ev) })).sort((a, b) => a.protection - b.protection);
+  if (anyActive && lp[lp.length - 1].protection - lp[0].protection > 0.3) out.push(["bad", `<b>Equity check:</b> ${personaById(lp[0].id).name} faces ${pct(lp[0].protection)} less harm than if you'd done nothing, while ${personaById(lp[lp.length - 1].id).name} faces ${pct(lp[lp.length - 1].protection)} less. Who is your plan leaving behind?`]);
   const vsBase = 1 - ev.trueHarm / base.trueHarm;
   out.push([vsBase > 0.3 ? "good" : "info", `Compared with doing nothing, true harm this year is <b>${pct(Math.max(0, vsBase))} lower</b> (${money(Math.max(0, base.trueHarm - ev.trueHarm))} saved).`]);
   return out;
@@ -845,9 +848,9 @@ function screenResults(ev) {
     ${PERSONAS.map(p => {
       const pe = ev.personas.find(x => x.id === p.id);
       const st = personaStory(p, pe, y);
-      const r = riskLabel(pe.harm);
+      const rel = relHarm(p.id, ev); const r = riskLabel(rel);
       return `<div class="persona">
-        <div class="who">${avatar(p)}<div><b>${p.name}, ${p.age}</b><br><span class="risk ${r}">${r} risk</span> <span class="small muted">${pct(pe.protection)} protected</span></div></div>
+        <div class="who">${avatar(p)}<div><b>${p.name}, ${p.age}</b><br><span class="risk ${r}">${r} risk</span> <span class="small muted" title="Compared with doing nothing">${pct(Math.max(0, 1 - rel))} less harm</span></div></div>
         <div class="callout ${st.kind}" style="margin:0">${st.text}</div>
       </div>`;
     }).join("")}
@@ -899,12 +902,14 @@ function screenDebrief(tab) {
 function tabResult() {
   const final = S.history[YEARS - 1];
   const g = grade();
+  const allLow = PERSONAS.every(p => riskLabel(relHarm(p.id, final)) === "Low");
   const saved = cumulative({}) - cumulative(S.picks);
   const owned = Object.keys(S.picks).map(CARD);
   const byLevel = l => owned.filter(c => c.level === l);
   const unused = CARDS.filter(c => S.picks[c.id] === undefined);
   const colors = { Events: "var(--lvl-events)", Patterns: "var(--lvl-patterns)", Structures: "var(--lvl-structures)", Mental: "var(--lvl-mental)" };
   return `
+  ${allLow ? `<div class="callout good" style="font-size:1rem"><b>\u2605 Nobody left behind.</b> Margaret, Raj, Denise and Walter all ended 2031 at Low risk. In simulation, only about 1 in 25 strategies manage this.</div>` : ""}
   <div class="hero">
     <div class="panel">
       <div class="eyebrow">Your result</div>
@@ -925,7 +930,7 @@ function tabResult() {
     </div>
   </div>
   <div class="grid4" style="margin-bottom:1rem">
-    ${PERSONAS.map(p => { const pe = final.personas.find(x => x.id === p.id); const r = riskLabel(pe.harm); return `<div class="persona"><div class="who">${avatar(p)}<div><b>${p.name}</b><br><span class="risk ${r}">${r} risk in 2031</span></div></div><p class="small">${pct(pe.protection)} protected. Main protection: ${pe.top[0] ? CARD(pe.top[0].id).name : "none"}.</p></div>`; }).join("")}
+    ${PERSONAS.map(p => { const pe = final.personas.find(x => x.id === p.id); const rel = relHarm(p.id, final); const r = riskLabel(rel); return `<div class="persona"><div class="who">${avatar(p)}<div><b>${p.name}</b><br><span class="risk ${r}">${r} risk in 2031</span></div></div><p class="small">${pct(Math.max(0, 1 - rel))} less harm than doing nothing. Main protection: ${pe.top[0] ? CARD(pe.top[0].id).name : "none"}.</p></div>`; }).join("")}
   </div>
   ${trendCharts()}
   <div class="panel">
