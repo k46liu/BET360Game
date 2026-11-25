@@ -182,8 +182,10 @@
   .td .q h3 { color: var(--accent); }
 
   .iceberg { display: grid; gap: 4px; }
-  .iceberg div { border-radius: 6px; padding: .5rem .8rem; display: flex; justify-content: space-between; gap: .5rem; font-size: .88rem; }
-  .iceberg div > b { white-space: nowrap; }
+  .iceberg > div { border-radius: 6px; padding: .5rem .8rem; display: flex; justify-content: space-between; gap: .5rem; font-size: .88rem; }
+  .iceberg > div > b { white-space: nowrap; }
+  .iceberg > div.icerow { display: grid; grid-template-columns: minmax(0,1.3fr) minmax(0,1fr); gap: 1.2rem; padding: 1rem 1.2rem; border-radius: 10px; font-size: .92rem; }
+  @media (max-width: 700px) { .iceberg > div.icerow { grid-template-columns: 1fr; } }
 
   .refs p { padding-left: 2rem; text-indent: -2rem; font-size: .85rem; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -740,7 +742,7 @@ function grade() {
 }
 
 function screenDebrief(tab) {
-  const tabs = [["result", "Your five years"], ["toc", "Theory of Change"], ["td", "Transition Design"], ["equity", "Equity lens"], ["frameworks", "Course frameworks"], ["evidence", "Real-world evidence"], ["about", "About & sources"]];
+  const tabs = [["result", "Your five years"], ["iceberg", "Iceberg map"], ["toc", "Theory of Change"], ["td", "Transition Design"], ["equity", "Equity lens"], ["frameworks", "Course frameworks"], ["evidence", "Real-world evidence"], ["about", "About & sources"]];
   render(`
   <div class="eyebrow">Debrief</div>
   <h2>From game to systems change</h2>
@@ -748,7 +750,7 @@ function screenDebrief(tab) {
   <div id="tabbody" role="tabpanel"></div>`);
   document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => screenDebrief(b.dataset.t));
   const body = document.getElementById("tabbody");
-  const fn = { result: tabResult, toc: tabToC, td: tabTD, equity: tabEquity, frameworks: tabFrameworks, evidence: tabEvidence, about: tabAbout }[tab];
+  const fn = { result: tabResult, iceberg: tabIceberg, toc: tabToC, td: tabTD, equity: tabEquity, frameworks: tabFrameworks, evidence: tabEvidence, about: tabAbout }[tab];
   body.innerHTML = fn();
   const again = document.getElementById("again");
   if (again) again.onclick = () => { S = newState(); screenYear(); };
@@ -792,6 +794,38 @@ function tabResult() {
   </div>`;
 }
 
+function tabIceberg() {
+  const ICE = {
+    Events: { q: "What is happening? What do we see?", items: ["An older adult loses savings to a voice-cloned “grandchild” call", "Fake CRA and bank calls", "Tech-support pop-ups trick people into giving remote access"] },
+    Patterns: { q: "What trends are there over time?", items: ["Scams growing in sophistication (AI voice cloning)", "$2.4B+ in reported fraud losses in Canada since 2022 (CAFC, 2026)", "Only 5% to 10% of fraud is ever reported (CAFC, 2026)"] },
+    Structures: { q: "How are the parts related? What influences the patterns?", items: ["Banks and government services moving online without training support", "STIR/SHAKEN only verifies internet-based calls; Bill C-15 now requires bank fraud-prevention policies, but there is no duty to reimburse victims and no trusted contact rule for bank accounts", "Nearly 3 in 10 older adults in Canada live alone (Ooi et al., 2023)"] },
+    Mental: { q: "What values, assumptions and beliefs shape the system?", items: ["“Older adults can’t learn new technology”", "Ageism: seniors’ losses treated as acceptable; shame and self-blame keep victims silent (CARP, 2025)", "Technology designed around a young, tech-savvy default user"] }
+  };
+  const colors = { Events: "var(--lvl-events)", Patterns: "var(--lvl-patterns)", Structures: "var(--lvl-structures)", Mental: "var(--lvl-mental)" };
+  return `
+  <div class="panel">
+    <div class="eyebrow">Iceberg model (Donella Meadows Project, n.d.) &middot; from my midterm report</div>
+    <h2>Every card acts at one level of the iceberg</h2>
+    <p>Left: what the midterm analysis found at each level. Right: the measures in the game that act there. Measures you funded are in bold. The deeper the level, the more leverage, and the slower the change.</p>
+  </div>
+  <div class="iceberg" style="gap:8px">
+    ${["Events", "Patterns", "Structures", "Mental"].map(l => {
+      const dark = l === "Structures" || l === "Mental";
+      const cards = CARDS.filter(c => c.level === l);
+      return `<div class="icerow" style="background:${colors[l]};color:${dark ? "#fff" : "var(--ink)"}">
+        <div><b style="font-size:1.05rem">${LEVELS[l]}</b> <span style="opacity:.85">&middot; ${ICE[l].q}</span>
+          <ul style="margin:.4rem 0 0;padding-left:1.1rem">${ICE[l].items.map(i => `<li>${i}</li>`).join("")}</ul></div>
+        <div><span style="opacity:.85;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em">Measures at this level</span>
+          <ul style="margin:.4rem 0 0;padding-left:1.1rem">${cards.map(c => `<li>${S.picks[c.id] !== undefined ? `<b>${c.name}</b>` : c.name} <span style="opacity:.8">(#${c.lp})</span></li>`).join("")}</ul></div>
+      </div>`;
+    }).join("")}
+  </div>
+  <div class="panel" style="margin-top:1rem">
+    <h3>Reading it</h3>
+    <p>The midterm found that the beliefs at the bottom (“they can’t learn”, “their losses are acceptable”) hold the structures in place, and the structures produce the patterns. So the game gives no measure at the Events level that lasts: an ad campaign treats this year’s scam script, and next year’s script is different. The measures that last change who carries the cost, who can see the data, and who is at the table.</p>
+  </div>`;
+}
+
 function tabToC() {
   const rows = [
     ["1. Design with older adults", ["Paid Older Adults Scam Resilience Council (newcomer, rural, low-income and 80+ members)", "Co-design and test every measure", "Pay co-designers and share credit"],
@@ -809,7 +843,8 @@ function tabToC() {
     "<b>Rules need information to work.</b> In the UK, 49% of victims did not try to get reimbursed and 71% did not know the policy existed (PSR, 2025). So liability only raises reporting here if paired with the Safety Line or one-tap reporting.",
     "<b>Ontario can lead but not legislate for banks.</b> Credit unions are provincially overseen, while most seniors bank federally. Strategy 2 assumes a provincial pilot can shape the federal strategy that is still being designed (Department of Finance Canada, 2026a).",
     "<b>Connection protects.</b> Improving well-being may reduce scam susceptibility more than literacy alone (DeLiema &amp; Sur, 2022).",
-    "<b>Reported numbers will get worse before true harm visibly improves.</b> Leaders need to commit to that in advance."
+    "<b>Reported numbers will get worse before true harm visibly improves.</b> Leaders need to commit to that in advance.",
+    "<b>Protection must not become control.</b> Holds can block legitimate payments and feel paternalistic. Trusted contacts are offered, never imposed, and the council of older adults sets hold thresholds and reviews complaints."
   ];
   return `
   <div class="panel">
@@ -859,10 +894,12 @@ function tabTD() {
         <li><b>Humility:</b> I am a 4th-year engineering student, not an older adult, and I could not interview anyone this term. The game says so, and Strategy 1 hands design power to older adults.</li>
         <li><b>From "helpless senior" to "systems failure":</b> my mother was scammed in her 40s and I was scammed as a computer engineering student. Scams exploit trust and emotion, not age.</li>
         <li><b>Radical collaboration:</b> banks, telcos, platforms, regulators, police and community groups all hold a piece.</li>
+        <li><b>The inherited system I am reacting to:</b> industrialization's efficiency logic, now digital-first. Branches close and services move online, designed around a young, tech-savvy default user.</li>
       </ul></div>
     <div class="q"><h3>New ways of designing</h3>
       <ul>
         <li><b>Solve for multiple issues at once:</b> peer educators deliver safety, digital skills and social connection (multifinality).</li>
+        <li><b>Grassroots to transition:</b> families already invent code words and \u201Chang up and call back\u201D rules (Manzini's diffuse design). The peer network spreads them; the trusted contact rule turns the same idea into infrastructure.</li>
         <li><b>Amplify what exists:</b> builds on Bill C-15, the CSA trusted contact rule, the Seniors Safety Line and Seniors Active Living Centres instead of starting from scratch.</li>
         <li><b>Long horizons:</b> the game shows why slow, deep measures must start first.</li>
         <li><b>A game as a design tool:</b> policymakers feel the trade-offs between approval, delay and real harm before committing.</li>
@@ -891,9 +928,19 @@ function tabEquity() {
         <li><b>Power:</b> banks, telcos and regulators decide which transactions are flagged and who repays. Older adults are designed <i>for</i>, not <i>with</i> (Aye, 2017). Strategy 1 pays them to co-design.</li>
         <li><b>Data gap:</b> with only 5% to 10% of fraud reported, and data rarely broken down by gender, language or region, the system cannot see who it is failing (Criado Perez, 2019).</li>
         <li><b>The federal strategy is age-blind:</b> its 2026 discussion paper does not mention older adults or trusted contacts (Department of Finance Canada, 2026a).</li>
+        <li><b>Designed for, consulted with, or co-creators?</b> Today, older adults are designed for. In this framework they are co-creators with pay and decision power (Strategy 1).</li>
         <li><b>The game itself:</b> adjustable text size, high contrast, keyboard play and plain language, following Microsoft's "solve for one, extend to many" (Microsoft Design, 2016).</li>
       </ul>
     </div>
+  </div>
+  <div class="panel"><h3>Persona spectrum: design for the barrier, not the label</h3>
+    <p class="small">Microsoft Design (2016) shows the same barrier can be permanent, temporary or situational. Scam scripts are built to create situational barriers for anyone, which is why a protection designed for the most excluded protects everyone.</p>
+    <table><thead><tr><th>Barrier</th><th>Permanent</th><th>Temporary</th><th>Situational</th></tr></thead><tbody>
+      <tr><td><b>Checking a claim</b></td><td>Cognitive decline</td><td>Grief after losing a spouse</td><td>A \u201Cgrandchild\u201D crying on the phone at 2 a.m.</td></tr>
+      <tr><td><b>Understanding the message</b></td><td>Hearing loss</td><td>Recovering from surgery, on medication</td><td>A loud call in a second language</td></tr>
+      <tr><td><b>Someone to ask</b></td><td>Living alone</td><td>Family away for a month</td><td>Told by the caller to keep it secret</td></tr>
+    </tbody></table>
+    <p class="small" style="margin-top:.6rem"><b>Solve for one, extend to many:</b> a trusted contact and a pause, designed for someone like Margaret, also stop the stressed 35-year-old being rushed by a fake \u201Cbank investigator\u201D.</p>
   </div>`;
 }
 
@@ -908,7 +955,10 @@ function tabFrameworks() {
     ["Theory of Change (Annie E. Casey Foundation, 2022)", "Four strategies, activities, short-term, interim and long-term outcomes, assumptions and audiences (see the Theory of Change tab)."],
     ["CMU Transition Design (Irwin et al., 2022)", "Vision, theories of change, posture and mindset, and new ways of designing (see the Transition Design tab)."],
     ["Inclusive & equity-centred design", "Equity lens, intersectional personas, the data gap, power analysis and an accessible game (see the Equity lens tab)."],
-    ["Wicked problems (Kolko, 2012)", "No single right answer: each persona reacts differently, and the goal is to improve the situation, not to \"solve\" scams."]
+    ["Wicked problems (Kolko, 2012)", "No single right answer: each persona reacts differently, and the goal is to improve the situation, not to \"solve\" scams."],
+    ["Wicked problem test (Live Session 1)", "Who defines the problem? Banks and regulators; older adults are absent. Which systems does it cross? Banking, telecom, platforms, policing, family and health. Whose interests conflict? Firms' costs and customer convenience vs victims' losses. What new effects could we create? Holds that block legitimate payments, paternalism, and reported losses that rise before they fall."],
+    ["Reallocation and mending models (Live Session 1)", "Reallocation: ads and workshops redirect public money around the failure. Mending: the Safety Line scam check extends the last mile; peer educators and the trusted contact pause are inclusive models that let excluded people participate safely; one-tap reporting fills a void (data the market never produced); shared liability changes the conditions that created the failure by pricing in the hidden cost."],
+    ["Designing for vs designing with (Live Session 2)", "Consultation becomes shared decision-making through the paid council; expert ownership becomes multiple forms of knowledge; a single intervention becomes change across a system."]
   ];
   return `<div class="panel"><h2>Course frameworks used</h2><table><thead><tr><th style="width:32%">Framework</th><th>Where it appears</th></tr></thead><tbody>${f.map(([a, b]) => `<tr><td><b>${esc(a)}</b></td><td>${esc(b)}</td></tr>`).join("")}</tbody></table></div>`;
 }
@@ -934,6 +984,7 @@ function tabAbout() {
     "Canadian Anti-Fraud Centre. (2026, March 6). <i>Fraud Prevention Month to bring hidden crime into the spotlight</i> [News release]. https://antifraudcentre-centreantifraude.ca/news-nouvelles/2026/2026-03-06-eng.htm",
     "Canadian Securities Administrators. (2021, July 15). <i>CSA notice of amendments to National Instrument 31-103 to enhance protection of older and vulnerable clients</i>.",
     "CHOICE. (2025, February 14). <i>New rules force big businesses to combat scams</i>. https://www.choice.com.au/money/banking/everyday-banking/articles/scams-prevention-framework-passes-parliament",
+    "Canadian Association of Retired Persons. (2025, April). <i>Frauds and scams: CARP demands justice for seniors</i> [Policy brief]. https://prod-static.carp.ca/uploads/2025/06/CARP-Policy-Brief-Frauds-and-Scams.pdf",
     "Creative Reaction Lab. (2018). <i>Equity-centered community design field guide</i>.",
     "Criado Perez, C. (2019). <i>Invisible women: Data bias in a world designed for men</i>. Abrams Press.",
     "DeLiema, M., &amp; Sur, A. (2022). Simulating well-being and literacy interventions to reduce elder scam susceptibility. <i>Innovation in Aging, 6</i>(Suppl. 1), 185. https://doi.org/10.1093/geroni/igac059.738",
@@ -950,6 +1001,7 @@ function tabAbout() {
     "Microsoft Design. (2016). <i>Inclusive Microsoft design</i>. Microsoft. https://www.microsoft.com/design/inclusive/",
     "Norman, D. (2022, February 26). <i>Humanity-centered versus human-centered design</i>. jnd.org. https://jnd.org/humanity-centered-versus-human-centered-design/",
     "OMERS. (2026, June 8). <i>Home scams are costing Ontario seniors millions</i>. https://www.omers.com/omers-community/home-scams-are-costing-ontario-seniors-millions",
+    "Ooi, L. L., Liu, L., Roberts, K. C., Gari&eacute;py, G., &amp; Capaldi, C. A. (2023). Social isolation, loneliness and positive mental health among older adults in Canada during the COVID-19 pandemic. <i>Health Promotion and Chronic Disease Prevention in Canada, 43</i>(4), 171&ndash;181. https://doi.org/10.24095/hpcdp.43.4.02",
     "Payment Systems Regulator. (2025, October). <i>One year on: Impact of APP reimbursement on victims</i>. https://www.psr.org.uk/news-and-updates/latest-news/news/one-year-on-impact-of-app-reimbursement-on-victims/",
     "Payment Systems Regulator. (2026, July 1). <i>Payment fraud falls by &pound;73m following PSR reimbursement scheme</i>. https://www.psr.org.uk/news-and-updates/latest-news/news/payment-fraud-falls-by-73m-following-psr-reimbursement-scheme/"
   ];
