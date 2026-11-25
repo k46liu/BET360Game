@@ -614,7 +614,9 @@ function screenYear() {
     <div><div class="eyebrow">Year ${y} of ${YEARS}</div><h2 style="margin:0">${START_YEAR + y}</h2></div>
     <div class="muted small" style="text-align:right">Budget this year: <b>${S.budget} points</b><br>${BUDGET} base${S.carry ? ` + ${S.carry} saved` : ""}${S.bonus > 0 ? " + 1 for high approval" : S.bonus < 0 ? " &minus; 1 for low approval" : ""}</div>
   </div>
-  <div class="event" role="note"><div class="icon" aria-hidden="true">${event.icon}</div><div><b>Scammers adapt:</b> ${event.text}<div class="small" style="opacity:.85;margin-top:.25rem">Blunted if any of these is already working this year: ${event.counters.map(id => CARD(id).name + (isActive(id, y, S.picks) ? " \u2713" : "")).join(" or ")}.</div></div></div>
+  <div class="event" role="note"><div class="icon" aria-hidden="true">${event.icon}</div><div><b>Scammers adapt:</b> ${event.text}<div class="small" style="opacity:.9;margin-top:.35rem">${event.counters.some(id => isActive(id, y, S.picks))
+      ? `\u2713 <b>You're ready:</b> ${event.counters.filter(id => isActive(id, y, S.picks)).map(id => CARD(id).name).join(" and ")} is already working, so this trend will do much less damage.`
+      : `<b>Not ready:</b> this trend would have done less damage if ${event.counters.map(id => CARD(id).name).join(" or ")} had already been working. Funding one now still helps later, once it starts.`}</div></div></div>
   ${hud(ev)}
   <div class="filters" role="group" aria-label="Filter by iceberg level">
     <span class="small muted">Show:</span>
