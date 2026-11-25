@@ -633,7 +633,7 @@ function screenYear() {
     const cands = S.forecast[y + 1].map(i => EVENTS[i]);
     return `<div class="callout info" role="note"><b>Forecast for next year (${START_YEAR + y + 1}):</b> analysts expect one of these two trends, but can't say which.
       <ul style="margin:.4rem 0 .2rem;padding-left:1.2rem">${cands.map(e => `<li>${e.icon} ${e.text}${ready(e) ? " <b style='color:var(--good)'>\u2713 you'll be ready for this one</b>" : ""}</li>`).join("")}</ul>
-      <span class="small muted">Look for "Counters:" tags on the cards. Most measures take a year to start, so prepare now, spend on today's problem, or find something that covers both.</span></div>`; })() : ""}
+      <span class="small muted">Look for "Counters:" tags on the cards. Most measures take a year to start, so prepare now, spend on today's problem, or find something that covers both.</span></div>`; })() : `<div class="callout info" role="note"><b>Final year: no forecast.</b> The simulation ends after ${START_YEAR + YEARS}, so only measures that work this year will show up in your score. In the real world, slower measures would keep paying off after 2031.</div>`}
   ${hud(ev)}
   <div class="filters" role="group" aria-label="Filter by iceberg level">
     <span class="small muted">Show:</span>
