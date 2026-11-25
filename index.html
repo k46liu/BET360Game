@@ -408,7 +408,16 @@ let ORDER = EVENTS.map((e, i) => i);     // which scam trend arrives in which ye
 function newState() {
   ORDER = EVENTS.map((e, i) => i);
   for (let i = ORDER.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [ORDER[i], ORDER[j]] = [ORDER[j], ORDER[i]]; }
-  return { year: 0, budget: BUDGET, carry: 0, bonus: 0, picks: {}, history: [], selected: new Set(), filter: "all" };
+  // forecasts are uncertain: for each coming year, show the real trend and one decoy, in random order
+  const forecast = {};
+  for (let y = 2; y <= YEARS; y++) {
+    const real = ORDER[y - 1];
+    const future = ORDER.slice(y - 1).filter(i => i !== real);   // prefer a decoy that hasn't happened yet
+    const others = future.length ? future : ORDER.filter(i => i !== real);
+    const decoy = others[Math.floor(Math.random() * others.length)];
+    forecast[y] = Math.random() < 0.5 ? [real, decoy] : [decoy, real];
+  }
+  return { year: 0, budget: BUDGET, carry: 0, bonus: 0, picks: {}, history: [], selected: new Set(), filter: "all", forecast };
 }
 function eventOf(y) { return EVENTS[ORDER[y - 1]]; }
 
@@ -537,7 +546,7 @@ function screenHowTo() {
         <p><b>True harm</b>: what older Ontarians actually lose. This is what matters, but in the real world nobody can see it well.</p>
         <p><b>Reported losses</b>: what the public and media see. When you make reporting easier, this number can <i>go up</i> even while true harm falls.</p>
         <p><b>Public approval</b>: what keeps you in the job. It rewards visible moves, not always effective ones. Below ${APPROVAL_LOW}%, your next budget drops by 1 point; above ${APPROVAL_HIGH}%, it rises by 1.</p>
-        <p class="small muted">Scam trends arrive in a different order every game, and each year you get a forecast of next year's trend. Measures that counter it have to be working <i>before</i> it arrives, so you'll often choose between today's problem and next year's. Measures that counter two trends are worth a lot.</p>
+        <p class="small muted">Scam trends arrive in a different order every game, and each year you get an uncertain forecast: two possible trends for next year, only one of which will happen. Measures that counter it have to be working <i>before</i> it arrives, so you'll often choose between today's problem and next year's. Measures that counter two trends are worth a lot.</p>
         <h3>Accessibility</h3>
         <p class="small">Use the buttons at the top for larger text or high contrast. Everything works with a keyboard.</p>
       </div>
@@ -615,14 +624,16 @@ function screenYear() {
     <div class="muted small" style="text-align:right">Budget this year: <b>${S.budget} points</b><br>${BUDGET} base${S.carry ? ` + ${S.carry} saved` : ""}${S.bonus > 0 ? " + 1 for high approval" : S.bonus < 0 ? " &minus; 1 for low approval" : ""}</div>
   </div>
   <div class="event" role="note"><div class="icon" aria-hidden="true">${event.icon}</div><div><b>This year, scammers adapt:</b> ${event.text}<div class="small" style="opacity:.9;margin-top:.35rem">${y === 1
-      ? `Nobody could have prepared for this one. From now on, each year comes with a forecast of next year's trend.`
+      ? `Nobody could have prepared for this one. From now on, each year comes with a forecast of what might come next.`
       : event.counters.some(id => isActive(id, y, S.picks))
       ? `\u2713 <b>You're ready:</b> ${event.counters.filter(id => isActive(id, y, S.picks)).map(id => CARD(id).name).join(" and ")} is already working, so this trend will do much less damage.`
       : `<b>Not ready:</b> this trend would have done less damage if ${event.counters.map(id => CARD(id).name).join(" or ")} had already been working.`}</div></div></div>
-  ${y < YEARS ? (() => { const nx = eventOf(y + 1); const set = nx.counters.filter(id => S.picks[id] !== undefined && startOf(id, S.picks) <= y + 1);
-    return `<div class="callout ${set.length ? "good" : "warn"}" role="note"><b>Forecast for ${START_YEAR + y + 1}:</b> ${nx.text} ${set.length
-      ? `\u2713 You're covered: ${set.map(id => CARD(id).name).join(" and ")} will be working.`
-      : `To be ready, fund <b>${nx.counters.map(id => CARD(id).name).join("</b> or <b>")}</b> this year (most take a year to start). Or spend on today's problem and accept the risk.`}</div>`; })() : ""}
+  ${y < YEARS ? (() => {
+    const ready = e => e.counters.some(id => S.picks[id] !== undefined && startOf(id, S.picks) <= y + 1);
+    const cands = S.forecast[y + 1].map(i => EVENTS[i]);
+    return `<div class="callout info" role="note"><b>Forecast for ${START_YEAR + y + 1}:</b> analysts expect one of these two trends, but can't say which.
+      <ul style="margin:.4rem 0 .2rem;padding-left:1.2rem">${cands.map(e => `<li>${e.icon} ${e.text}${ready(e) ? " <b style='color:var(--good)'>\u2713 something you funded counters this</b>" : ""}</li>`).join("")}</ul>
+      <span class="small muted">Look for "Counters:" tags on the cards. Most measures take a year to start, so prepare now, spend on today's problem, or find something that covers both.</span></div>`; })() : ""}
   ${hud(ev)}
   <div class="filters" role="group" aria-label="Filter by iceberg level">
     <span class="small muted">Show:</span>
@@ -697,7 +708,7 @@ function insights(ev, prev, y) {
     out.push(["info", `<b>Reported losses went up while true harm fell.</b> More victims are reporting, so you can finally see the problem. In a real ministry, this is the year the headlines turn against you. Stay the course.`]);
   }
   const evNow = eventOf(y);
-  if (y === 1) out.push(["info", `<b>Year one:</b> no one could have prepared for this year's trend. Next year's trend is forecast on the planning screen, so you can get ahead of it.`]);
+  if (y === 1) out.push(["info", `<b>Year one:</b> no one could have prepared for this year's trend. The planning screen forecasts two possible trends for next year, so you can try to get ahead.`]);
   else if (readyFor(y - 1, S.picks)) out.push(["good", `<b>You were ready.</b> ${evNow.counters.filter(id => isActive(id, y, S.picks)).map(id => CARD(id).name).join(" and ")} blunted this year's new scam trend, so it never fully took hold.`]);
   else out.push(["warn", `<b>This year's trend caught Ontario unprepared.</b> Nothing that counters it was working yet, so it will keep doing damage in later years. Systems that anticipate change beat systems that react.`]);
   const fading = CARDS.filter(c => c.decay && isActive(c.id, y, S.picks) && startOf(c.id, S.picks) < y);
