@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hold the Line: A Scam Resilience Simulation for Ontario</title>
+<meta name="description" content="A systems-level policy simulation on scam vulnerability among older adults in Ontario. BET 360 final product by Xiwen (Kevin) Liu.">
+<style>
+  :root {
+    --bg: #f7f3ec;
+    --panel: #ffffff;
+    --ink: #1f2a44;
+    --muted: #5b6476;
+    --line: #e2dccf;
+    --accent: #c2563a;
+    --accent-soft: #f6e3dc;
+    --good: #2f7d5b;
+    --good-soft: #e0f0e8;
+    --warn: #b7791f;
+    --warn-soft: #fbf0d9;
+    --bad: #b23a3a;
+    --bad-soft: #f7dede;
+    --lvl-events: #dbe8f4;
+    --lvl-patterns: #a9c7e3;
+    --lvl-structures: #5b8fc0;
+    --lvl-mental: #24476e;
+    --radius: 12px;
+    --shadow: 0 1px 2px rgba(31,42,68,.06), 0 4px 16px rgba(31,42,68,.06);
+    --fs: 17px;
+  }
+  html { font-size: var(--fs); }
+  html.size-l { --fs: 19px; }
+  html.size-xl { --fs: 22px; }
+  html.contrast {
+    --bg: #ffffff; --panel: #ffffff; --ink: #000000; --muted: #222222; --line: #000000;
+    --accent: #9e2a10; --accent-soft: #ffe9e2; --good: #0b5d3b; --bad: #8f0000;
+    --shadow: none;
+  }
+  html.contrast .card, html.contrast .panel, html.contrast .persona { border-width: 2px; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.5;
+  }
+  h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; line-height: 1.2; margin: 0 0 .5rem; }
+  h1 { font-size: 2.2rem; }
+  h2 { font-size: 1.6rem; }
+  h3 { font-size: 1.15rem; }
+  p { margin: 0 0 .8rem; }
+  a { color: var(--accent); }
+  button { font: inherit; cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  main:focus { outline: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .fade { animation: fade .35s ease-out; }
+    @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  }
+
+  .topbar {
+    position: sticky; top: 0; z-index: 10; background: var(--ink); color: #fff;
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: .55rem 1.2rem; flex-wrap: wrap;
+  }
+  .topbar .brand { font-family: Georgia, serif; font-weight: 700; letter-spacing: .02em; }
+  .topbar .brand span { opacity: .7; font-weight: 400; font-family: system-ui, sans-serif; font-size: .85rem; margin-left: .5rem; }
+  .a11y { display: flex; gap: .35rem; align-items: center; font-size: .85rem; }
+  .a11y button {
+    background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.5);
+    border-radius: 6px; padding: .2rem .55rem; min-height: 32px;
+  }
+  .a11y button[aria-pressed="true"] { background: #fff; color: var(--ink); }
+
+  main { max-width: 1120px; margin: 0 auto; padding: 1.5rem 1.2rem 4rem; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.4rem; margin-bottom: 1.2rem; }
+  .eyebrow { text-transform: uppercase; letter-spacing: .08em; font-size: .75rem; color: var(--accent); font-weight: 700; margin-bottom: .3rem; }
+  .muted { color: var(--muted); }
+  .small { font-size: .85rem; }
+  .btn {
+    display: inline-flex; align-items: center; gap: .4rem; border: 0; border-radius: 10px;
+    padding: .75rem 1.3rem; background: var(--accent); color: #fff; font-weight: 700; min-height: 48px;
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn.secondary { background: transparent; color: var(--ink); border: 2px solid var(--ink); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; filter: none; }
+  .row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+  .spread { justify-content: space-between; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+  .grid4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; }
+
+  .hero { display: grid; grid-template-columns: 1.3fr 1fr; gap: 1.5rem; align-items: start; }
+  @media (max-width: 820px) { .hero { grid-template-columns: 1fr; } }
+  .stat { border-left: 4px solid var(--accent); padding: .3rem 0 .3rem .8rem; margin-bottom: .9rem; }
+  .stat b { display: block; font-size: 1.5rem; font-family: Georgia, serif; }
+  .stat span { font-size: .85rem; color: var(--muted); }
+
+  .persona { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem; box-shadow: var(--shadow); }
+  .persona .who { display: flex; gap: .7rem; align-items: center; margin-bottom: .5rem; }
+  .avatar { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; color: #fff; font-family: Georgia, serif; font-size: 1.2rem; flex: none; }
+  .tag { display: inline-block; font-size: .72rem; padding: .12rem .5rem; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); margin: 0 .25rem .25rem 0; white-space: nowrap; }
+  .risk { font-weight: 700; font-size: .8rem; padding: .15rem .55rem; border-radius: 999px; }
+  .risk.High { background: var(--bad-soft); color: var(--bad); }
+  .risk.Medium { background: var(--warn-soft); color: var(--warn); }
+  .risk.Low { background: var(--good-soft); color: var(--good); }
+
+  .hud { display: grid; grid-template-columns: repeat(4, 1fr); gap: .8rem; margin-bottom: 1rem; }
+  @media (max-width: 820px) { .hud { grid-template-columns: repeat(2, 1fr); } }
+  .hud .box { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: .8rem 1rem; }
+  .hud .label { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .hud .value { font-size: 1.45rem; font-family: Georgia, serif; font-weight: 700; }
+  .hud .hint { font-size: .75rem; color: var(--muted); }
+  .meter { height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; margin-top: .35rem; }
+  .meter > i { display: block; height: 100%; background: var(--accent); }
+
+  .event { background: var(--ink); color: #fff; border-radius: var(--radius); padding: 1rem 1.2rem; margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; }
+  .event .icon { font-size: 1.8rem; }
+  .event b { color: #ffd2c4; }
+
+  .filters { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .8rem; align-items: center; }
+  .chip { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: .3rem .8rem; font-size: .85rem; min-height: 36px; }
+  .chip[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+  .card {
+    position: relative; text-align: left; background: var(--panel); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 1rem 1rem .9rem; box-shadow: var(--shadow);
+    display: flex; flex-direction: column; gap: .45rem; color: var(--ink); width: 100%;
+  }
+  .card:hover:not(:disabled) { border-color: var(--ink); }
+  .card[aria-pressed="true"] { border: 2px solid var(--accent); background: var(--accent-soft); }
+  .card:disabled { cursor: default; }
+  .card.owned { opacity: .62; }
+  .card .top { display: flex; justify-content: space-between; gap: .5rem; align-items: start; }
+  .card .name { font-weight: 700; font-size: 1rem; line-height: 1.3; }
+  .cost { flex: none; background: var(--ink); color: #fff; border-radius: 8px; padding: .15rem .5rem; font-weight: 700; font-size: .85rem; }
+  .card .desc { font-size: .88rem; }
+  .card .why { font-size: .8rem; color: var(--muted); border-top: 1px dashed var(--line); padding-top: .45rem; }
+  .lvl { display: inline-block; font-size: .7rem; font-weight: 700; padding: .12rem .5rem; border-radius: 6px; }
+  .lvl.Events { background: var(--lvl-events); color: #1f2a44; }
+  .lvl.Patterns { background: var(--lvl-patterns); color: #1f2a44; }
+  .lvl.Structures { background: var(--lvl-structures); color: #fff; }
+  .lvl.Mental { background: var(--lvl-mental); color: #fff; }
+  .status { font-size: .75rem; font-weight: 700; }
+  .status.active { color: var(--good); }
+  .status.pending { color: var(--warn); }
+
+  .commitbar {
+    position: sticky; bottom: 0; background: var(--panel); border-top: 1px solid var(--line);
+    padding: .8rem 1.2rem; margin: 1.2rem -1.2rem -4rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;
+    box-shadow: 0 -4px 16px rgba(31,42,68,.08);
+  }
+
+  .callout { border-radius: 10px; padding: .8rem 1rem; margin-bottom: .7rem; font-size: .92rem; }
+  .callout.info { background: #e8eff7; }
+  .callout.good { background: var(--good-soft); }
+  .callout.warn { background: var(--warn-soft); }
+  .callout.bad { background: var(--bad-soft); }
+
+  .chart { width: 100%; height: auto; display: block; }
+  .legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: .8rem; color: var(--muted); }
+  .legend i { display: inline-block; width: 18px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: .35rem; }
+
+  .tabs { display: flex; gap: .4rem; flex-wrap: wrap; border-bottom: 2px solid var(--line); margin-bottom: 1rem; }
+  .tabs button { background: none; border: 0; padding: .6rem .9rem; border-bottom: 3px solid transparent; margin-bottom: -2px; font-weight: 600; color: var(--muted); min-height: 44px; }
+  .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+
+  table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+  th, td { text-align: left; padding: .5rem .6rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--bg); }
+
+  .toc { display: grid; grid-template-columns: 1.15fr 1.3fr 1fr 1fr 1fr; gap: .5rem; font-size: .8rem; }
+  .toc .head { font-weight: 700; text-transform: uppercase; font-size: .7rem; letter-spacing: .06em; color: var(--muted); padding: .2rem .3rem; }
+  .toc .cell { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: .5rem .6rem; }
+  .toc .strat { background: var(--ink); color: #fff; font-weight: 700; }
+  .toc .goal { grid-column: 1 / -1; background: var(--accent); color: #fff; text-align: center; font-weight: 700; font-size: .95rem; padding: .8rem; border-radius: 10px; }
+  .toc ul { margin: 0; padding-left: 1rem; }
+  @media (max-width: 900px) { .toc { grid-template-columns: 1fr; } .toc .head { display: none; } .toc .strat { margin-top: .6rem; } }
+
+  .td { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 760px) { .td { grid-template-columns: 1fr; } }
+  .td .q { border-radius: var(--radius); padding: 1rem; border: 1px solid var(--line); background: var(--panel); }
+  .td .q h3 { color: var(--accent); }
+
+  .iceberg { display: grid; gap: 4px; }
+  .iceberg div { border-radius: 6px; padding: .5rem .8rem; display: flex; justify-content: space-between; gap: .5rem; font-size: .88rem; }
+  .iceberg div > b { white-space: nowrap; }
+
+  .refs p { padding-left: 2rem; text-indent: -2rem; font-size: .85rem; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  footer { text-align: center; font-size: .78rem; color: var(--muted); padding: 1rem; }
+  @media print { .topbar, .commitbar, .a11y { display: none; } }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Hold the Line <span>A scam resilience simulation for Ontario</span></div>
+  <div class="a11y" role="group" aria-label="Display options">
+    <span aria-hidden="true">Text</span>
+    <button type="button" data-size="" aria-pressed="true" aria-label="Normal text size">A</button>
+    <button type="button" data-size="size-l" aria-pressed="false" aria-label="Large text size">A+</button>
+    <button type="button" data-size="size-xl" aria-pressed="false" aria-label="Extra large text size">A++</button>
+    <button type="button" id="contrastBtn" aria-pressed="false">High contrast</button>
+  </div>
+</header>
+<main id="app" tabindex="-1"></main>
+<div id="live" class="sr" aria-live="polite"></div>
+<footer>BET 360 Final Product: Xiwen (Kevin) Liu, University of Waterloo, 2026. The model is illustrative: it is built from published research, not a forecast. See "About this model" in the debrief.</footer>
+<noscript><p style="padding:2rem">This simulation needs JavaScript. Please enable it to play.</p></noscript>
+
+<script>
+"use strict";
+
+/* ===================== DATA ===================== */
+
+const START_YEAR = 2026;
+const YEARS = 5;               // 2027 to 2031
+const BUDGET = 5;              // policy points per year, unspent points carry over
+const BASE_TRUE_HARM = 1.45e9; // est. true annual losses of Ontario adults 60+ (reported ~$101M / ~7% reporting)
+const BASE_REPORTED = 101e6;   // ~40% of Ontario's ~$258M annualized reported losses (OMERS, 2026)
+const BASE_RATE = 0.07;        // CAFC: only 5% to 10% of fraud is reported
+
+const PERSONAS = [
+  { id: "margaret", name: "Margaret", age: 81, color: "#c2563a",
+    blurb: "Widowed, lives alone in Peterborough. Landline and a tablet her grandson set up. Banks at a local credit union.",
+    tags: ["Lives alone", "Woman, 80+", "Phone scams"],
+    harm: [
+      "A crying \"grandson\" (an AI voice clone) called from a \"police station\". She withdrew $9,000 for a courier and told no one.",
+      "A \"bank investigator\" convinced her to move her savings to a \"safe account\". She lost $14,000.",
+      "The same scammers called back offering to \"recover\" her losses for a fee. She paid $2,500.",
+      "She stopped answering her phone at all, including calls from her doctor's office.",
+      "An online \"friend\" from her tablet asked for gift cards to visit her. She bought $1,200 worth."
+    ],
+    saved: {
+      pause: "A \"grandson\" called about bail. Her credit union paused the $9,000 transfer and phoned her daughter, her trusted contact. Scam stopped.",
+      peers: "At Tuesday drop-in her peer educator had just practised \"hang up and call back\". She called her real grandson. He was at school.",
+      calls: "The call showed \"Likely spoofed\" before she picked up. She let it ring.",
+      line: "Unsure, she called the Seniors Safety Line at 11 p.m. A real person told her it was a scam.",
+      liability: "Her bank's new fraud team spotted a first-time large withdrawal and called her before releasing the cash.",
+      federal: "Her savings at a big bank now had a trusted contact on file too, thanks to the federal rule change.",
+      stories: "She'd heard a retired judge on the radio talk about being scammed. She didn't feel ashamed to ask her daughter first."
+    }
+  },
+  { id: "raj", name: "Raj", age: 72, color: "#2f7d5b",
+    blurb: "Moved to Brampton to live near his daughter. More comfortable in Punjabi than English. Uses WhatsApp daily. Banks at a big bank.",
+    tags: ["Language barrier", "Newcomer", "Messaging scams"],
+    harm: [
+      "English-only TV warnings went over his head. A caller \"from his daughter's bank\" got his card PIN and took $2,000.",
+      "A \"CRA officer\" threatened arrest in Punjabi. He paid $3,500 in gift cards.",
+      "A WhatsApp investment group promised 20% monthly returns. He put in $6,000.",
+      "A Punjabi WhatsApp message from \"Service Canada\" asked him to \"verify\" his pension. They emptied his account.",
+      "Too embarrassed to tell his daughter, he stopped using his phone for banking and anything else."
+    ],
+    saved: {
+      line: "He called the Safety Line and had a Punjabi interpreter within two minutes. It was a scam.",
+      peers: "His Punjabi-speaking peer group at the community centre had seen the same \"CRA\" script the week before.",
+      report: "He reported the message in two taps. The number was shut down within a day, protecting others in his community.",
+      calls: "The \"CRA\" call was blocked as a spoofed government number.",
+      liability: "His bank flagged the transfer to a new overseas payee and called him in Punjabi before sending it.",
+      federal: "His big bank now offers the trusted contact rule Ontario piloted. It held the transfer and called his daughter.",
+      adsverify: "The fake investment group's ads were pulled: the advertiser could not pass verification.",
+      stories: "A Punjabi radio show ran survivor stories. He realized it could happen to anyone and asked his daughter."
+    }
+  },
+  { id: "denise", name: "Denise", age: 68, color: "#7a4fa0",
+    blurb: "Recently retired nurse in Ottawa. Confident online. \"I'd never fall for a scam.\" Investments and a big bank.",
+    tags: ["Tech-confident", "Overconfidence", "Investment & romance scams"],
+    harm: [
+      "A dating-app match she had never met asked for $2,000 for a \"medical emergency\". She sent it.",
+      "She tapped a fake Canada Post text and her card was used for $1,800.",
+      "A deepfake video of a famous Canadian promoted a crypto platform. She invested $25,000.",
+      "The fake platform showed \"profits\" and asked for more to withdraw them. She added $15,000.",
+      "Ashamed, she didn't report it, so the platform kept running and found others."
+    ],
+    saved: {
+      adsverify: "The deepfake investment ad never reached her feed: the advertiser could not pass verification.",
+      stories: "After hearing a retired doctor describe being scammed, she paused and checked with her sister first.",
+      liability: "Her bank flagged the first crypto transfer as high-risk and called her. Under the new liability rules it had every reason to.",
+      pause: "The large transfer was held for 72 hours. Her trusted contact asked questions she couldn't answer.",
+      federal: "Her bank now holds unusual transfers and calls a trusted contact, a federal rule Ontario pushed for.",
+      report: "She reported the fake platform in two taps. It was taken down within the week."
+    }
+  },
+  { id: "walter", name: "Walter", age: 77, color: "#b7791f",
+    blurb: "Lives on a small pension and the Guaranteed Income Supplement in rural Northern Ontario. Patchy internet. His credit union branch is closing.",
+    tags: ["Low income", "Rural", "Door & phone scams"],
+    harm: [
+      "A door-to-door \"furnace inspector\" charged $4,000 for work that was never done.",
+      "His branch closed. A \"helpful\" stranger offered to set up his online banking, then drained it.",
+      "A caller offered a \"government energy rebate\" if he paid a $500 \"processing fee\".",
+      "He lost his GIS deposit to a fake \"Service Canada\" text.",
+      "Scammers sold his number as an \"easy target\". The calls doubled."
+    ],
+    saved: {
+      pause: "His credit union held the unusual withdrawal and called his neighbour, his trusted contact.",
+      peers: "The seniors' centre van now brings a peer educator to his town every week. He checked the \"rebate\" offer there first.",
+      line: "He called the Safety Line about the \"inspector\". They confirmed no such program exists.",
+      calls: "The fake rebate call was flagged as spoofed and went to voicemail.",
+      liability: "His bank caught the new-payee transfer and called him first.",
+      federal: "The federal age lens meant his account now had a 72-hour hold on unusual transfers."
+    }
+  }
+];
+
+const LEVELS = { Events: "Events", Patterns: "Patterns", Structures: "Structures", Mental: "Mental models" };
+
+const CARDS = [
+  { id: "ads", name: "TV & radio scam awareness ads", cost: 2, delay: 0, level: "Events", lp: 12, lpName: "Numbers & parameters",
+    market: "Reallocation", order: 1, approval: 10, decay: 0.5,
+    eff: { margaret: .10, raj: .02, denise: .00, walter: .06 }, report: 0,
+    desc: "A province-wide \"Don't get scammed\" campaign in English and French.",
+    why: "Fast and visible, so it scores well politically. But scripts change faster than ads, and it misses people who don't watch TV in English or French." },
+  { id: "workshops", name: "Library fraud workshops", cost: 1, delay: 0, level: "Patterns", lp: 12, lpName: "Numbers & parameters",
+    market: "Reallocation", order: 3, approval: 4, decay: 0.75,
+    eff: { margaret: .08, raj: .02, denise: .03, walter: .02 }, report: 0,
+    desc: "Free one-time fraud prevention workshops at public libraries.",
+    why: "Helps people who already show up. Misses people who are isolated, rural or more comfortable in another language." },
+  { id: "line", name: "\"Check before you pay\" scam line on the Seniors Safety Line", cost: 2, delay: 0, level: "Patterns", lp: 6, lpName: "Information flows",
+    market: "Mending", order: 3, approval: 3,
+    eff: { margaret: .10, raj: .22, denise: .05, walter: .12 }, report: .03,
+    desc: "Add trained fraud staff to Ontario's existing 24/7 Seniors Safety Line (200+ languages, currently focused on abuse and neglect) so anyone can check a suspicious call or payment in real time. Banks print the number on every statement.",
+    why: "Scams happen at night and in every language. The line already answers 24/7 in 200+ languages, so adding fraud expertise builds on what exists instead of starting over." },
+  { id: "report", name: "One-tap, shame-free reporting", cost: 3, delay: 1, level: "Structures", lp: 6, lpName: "Information flows",
+    market: "Mending", order: 4, approval: 0,
+    eff: { margaret: .04, raj: .08, denise: .06, walter: .04 }, report: .12,
+    desc: "Report once from your bank app, phone or the Safety Line. It goes to the CAFC and police automatically, with data broken down by age, gender and language.",
+    why: "Only 5% to 10% of fraud is reported, so the system is flying blind (Criado Perez's data gap). After one year, better data makes every other measure better targeted." },
+  { id: "pause", name: "Trusted contact + 72-hour pause at Ontario credit unions", cost: 3, delay: 1, level: "Structures", lp: 5, lpName: "Rules",
+    market: "Mending", order: 4, approval: 2,
+    eff: { margaret: .35, raj: .05, denise: .05, walter: .30 }, report: .02,
+    desc: "Use Ontario's oversight of credit unions (through FSRA) to require that members be offered a trusted contact, and allow a 72-hour hold on unusual transfers.",
+    why: "Investment firms have had to ask for a trusted contact since 2021 (CSA). Chequing accounts, where grandparent-scam money leaves, have no such required rule." },
+  { id: "federal", name: "Push Ottawa to add an age lens to the National Anti-Fraud Strategy", cost: 2, delay: 2, level: "Structures", lp: 4, lpName: "Power to change system structure",
+    market: "Mending", order: 4, approval: 1,
+    eff: { margaret: .06, raj: .06, denise: .06, walter: .06 }, report: .02,
+    effWithPause: { margaret: .10, raj: .22, denise: .18, walter: .12 },
+    desc: "Formally ask the federal government to add trusted contacts, temporary holds and age-disaggregated data to the strategy, which does not currently mention older adults.",
+    why: "Most seniors bank with federally regulated banks. Ontario can pilot rules at credit unions, but it needs Ottawa to scale them. Much stronger once the credit union pause exists: it carries that rule to the big banks most seniors use." },
+  { id: "liability", name: "Shared liability: firms reimburse when they miss red flags", cost: 4, delay: 2, level: "Structures", lp: 5, lpName: "Rules (incentives)",
+    market: "Mending", order: 4, approval: 3, approvalPending: -6,
+    eff: { margaret: .18, raj: .16, denise: .20, walter: .16 }, report: .04,
+    desc: "Champion a UK-style rule: banks, telcos and platforms that miss clear warning signs share the cost of reimbursing victims.",
+    why: "In the UK, mandatory reimbursement (2024) cut push-payment fraud by about 21% in year one as banks invested in prevention. It puts the cost on those who can prevent the scam. Expect industry pushback." },
+  { id: "calls", name: "Spoofed-call blocking push (CRTC & carriers)", cost: 2, delay: 1, level: "Structures", lp: 8, lpName: "Balancing feedback loops",
+    market: "Mending", order: 2, approval: 2,
+    eff: { margaret: .15, raj: .14, denise: .03, walter: .12 }, report: 0,
+    desc: "Push carriers and the CRTC to block or label calls that spoof banks, police and government numbers, including on older non-internet phone lines.",
+    why: "Caller ID checks (STIR/SHAKEN) only work on internet-based calls. Many seniors still use landlines." },
+  { id: "adsverify", name: "Verified-advertiser rule for platforms", cost: 2, delay: 1, level: "Structures", lp: 5, lpName: "Rules",
+    market: "Mending", order: 4, approval: 2,
+    eff: { margaret: .03, raj: .08, denise: .26, walter: .02 }, report: 0,
+    desc: "Back federal proposals to limit financial ads to verified advertisers and remove deepfake investment ads fast.",
+    why: "Investment scams start with an ad. Stopping the ad stops the scam before anyone needs to spot it." },
+  { id: "peers", name: "Paid peer-educator network in Seniors Active Living Centres", cost: 3, delay: 1, level: "Mental", lp: 4, lpName: "Self-organization",
+    market: "Mending", order: 3, approval: 3,
+    eff: { margaret: .18, raj: .18, denise: .06, walter: .15 }, report: .04,
+    desc: "Train and pay older adults to run weekly drop-ins in their own languages: tech help, \"hang up and call back\" practice, and company. Rural centres get a travelling van.",
+    why: "Well-being may protect against scams more than literacy does (DeLiema & Sur, 2022). One program delivers safety, skills and friendship (multifinality)." },
+  { id: "stories", name: "\"It could be anyone\" survivor-led campaign", cost: 2, delay: 1, level: "Mental", lp: 2, lpName: "Paradigm",
+    market: "Mending", order: 1, approval: 2,
+    eff: { margaret: .05, raj: .06, denise: .12, walter: .04 }, report: .06,
+    desc: "Victims of all ages (students, engineers, nurses, retirees) tell their own stories. Message: scams are crimes, not character flaws.",
+    why: "Shame keeps victims silent and blames the person, not the system (Farina, 2026). Changing the story raises reporting." },
+  { id: "council", name: "Older Adults Scam Resilience Council (paid co-designers)", cost: 1, delay: 0, level: "Mental", lp: 3, lpName: "Goals",
+    market: "Mending", order: 4, approval: 1,
+    eff: { margaret: 0, raj: 0, denise: 0, walter: 0 }, report: 0,
+    desc: "A standing council of older adults, including newcomers, low-income and rural seniors, paid for their time, who co-design every measure.",
+    why: "\"Co-creation is a lie unless the co-creators share in the value\" (Hall). Every measure funded in the same year or later works 20% better for the people it is meant for." }
+];
+
+const EVENTS = [
+  { icon: "☎", text: "AI voice cloning makes \"grandparent scams\" sound exactly like family.", mult: { margaret: 1.25, walter: 1.1 } },
+  { icon: "\u{1F3E6}", text: "Bank branches close across rural Ontario. More seniors are pushed online, often with a stranger's \"help\".", mult: { walter: 1.3, margaret: 1.05 } },
+  { icon: "\u{1F4F1}", text: "Deepfake celebrity investment ads flood social media.", mult: { denise: 1.4, raj: 1.15 } },
+  { icon: "\u{1F310}", text: "Scammers impersonate the CRA and Service Canada in dozens of languages.", mult: { raj: 1.35, walter: 1.1 } },
+  { icon: "\u{1F4B3}", text: "As banks tighten up, scammers shift to gift cards and crypto ATMs.", mult: { margaret: 1.1, raj: 1.1, denise: 1.1, walter: 1.1 } }
+];
+
+const BANKISH = ["pause", "calls", "adsverify", "report"];
+
+/* ===================== STATE ===================== */
+
+let S;
+function newState() {
+  return { year: 0, budget: BUDGET, picks: {}, history: [], selected: new Set(), filter: "all" };
+}
+
+/* ===================== MODEL ===================== */
+
+function threat(pid, y) {
+  let t = Math.pow(1.04, y);                 // reported incidents in Ontario more than doubled 2014 to 2024
+  for (let i = 0; i < y; i++) {               // each year's new tactic hits hardest that year, then settles at half strength
+    const m = EVENTS[i].mult[pid] || 1;
+    t *= (i === y - 1) ? m : 1 + (m - 1) * 0.5;
+  }
+  return t;
+}
+function startOf(id, picks) { return picks[id] === undefined ? Infinity : picks[id] + CARD(id).delay; }
+function isActive(id, y, picks) { return startOf(id, picks) <= y; }
+function CARD(id) { return CARDS.find(c => c.id === id); }
+
+function cardReduction(c, pid, y, picks) {
+  if (!isActive(c.id, y, picks) || c.id === "council") return 0;
+  let e = (c.effWithPause && isActive("pause", y, picks)) ? c.effWithPause[pid] : (c.eff[pid] || 0);
+  if (c.decay) e *= Math.pow(c.decay, y - startOf(c.id, picks));
+  let m = 1;
+  if (picks.council !== undefined && picks[c.id] >= picks.council) m *= 1.2;
+  if (c.id !== "report" && isActive("report", y - 1, picks)) m *= 1.15;
+  if (BANKISH.includes(c.id) && isActive("liability", y, picks)) m *= 1.3;
+  return Math.min(0.6, e * m);
+}
+
+function evaluate(y, picks) {
+  const personas = PERSONAS.map(p => {
+    const reds = CARDS.map(c => ({ id: c.id, r: cardReduction(c, p.id, y, picks) })).filter(x => x.r > 0).sort((a, b) => b.r - a.r);
+    const keep = reds.reduce((acc, x) => acc * (1 - x.r), 1);
+    const harm = threat(p.id, y) * keep;
+    return { id: p.id, harm, protection: 1 - keep, top: reds };
+  });
+  const avg = personas.reduce((a, p) => a + p.harm, 0) / personas.length;
+  let rate = BASE_RATE;
+  CARDS.forEach(c => {
+    if (!isActive(c.id, y, picks)) return;
+    if (c.id === "liability" && !(isActive("line", y, picks) || isActive("report", y, picks))) return; // UK: 71% of victims never heard of the policy
+    rate += c.report || 0;
+  });
+  rate = Math.min(0.6, rate);
+  const trueHarm = BASE_TRUE_HARM * avg;
+  const reported = trueHarm * rate;
+  const avgProt = personas.reduce((a, p) => a + p.protection, 0) / personas.length;
+  let approval = 50 - 15 * Math.log2(reported / BASE_REPORTED) + 12 * avgProt; // headlines punish rising reported losses; people slowly notice they are safer
+  CARDS.forEach(c => {
+    if (picks[c.id] === undefined || picks[c.id] > y) return;
+    if (isActive(c.id, y, picks)) {
+      let a = c.approval || 0;
+      if (c.decay) a *= Math.pow(c.decay, y - startOf(c.id, picks));
+      approval += a;
+    } else if (c.approvalPending) approval += c.approvalPending;
+  });
+  approval = Math.max(5, Math.min(95, approval));
+  return { y, personas, avg, rate, trueHarm, reported, approval };
+}
+
+function riskLabel(h) { return h >= 0.9 ? "High" : h >= 0.55 ? "Medium" : "Low"; }
+
+/* ===================== HELPERS ===================== */
+
+const $app = document.getElementById("app");
+const money = v => v >= 1e9 ? "$" + (v / 1e9).toFixed(2) + "B" : "$" + Math.round(v / 1e6) + "M";
+const pct = v => Math.round(v * 100) + "%";
+function esc(s) { return String(s).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[ch])); }
+function announce(t) { document.getElementById("live").textContent = t; }
+function render(html) { $app.innerHTML = `<div class="fade">${html}</div>`; $app.focus({ preventScroll: true }); window.scrollTo(0, 0); }
+function levelTag(l) { return `<span class="lvl ${l}">Iceberg: ${LEVELS[l]}</span>`; }
+function personaById(id) { return PERSONAS.find(p => p.id === id); }
+
+function avatar(p) { return `<div class="avatar" style="background:${p.color}" aria-hidden="true">${p.name[0]}</div>`; }
+
+/* ===================== SCREENS ===================== */
+
+function screenIntro() {
+  render(`
+  <section class="hero">
+    <div class="panel">
+      <div class="eyebrow">BET 360 final product &middot; Systems-level simulation</div>
+      <h1>Hold the Line</h1>
+      <p style="font-size:1.1rem">It is January 2027. You have just been appointed to lead Ontario's new <b>Scam Resilience Task Force</b>. Your job: reduce the harm scams cause older adults over the next five years.</p>
+      <p>You have <b>${BUDGET} policy points a year</b>. Every measure costs points, some take years to work, and the ones that look best in the news are not always the ones that work best.</p>
+      <p>You will see the results through four Ontarians whose risks are different, because exclusion is never one-size-fits-all.</p>
+      <div class="row" style="margin-top:1.2rem">
+        <button class="btn" id="go">Meet the people you serve &rarr;</button>
+        <button class="btn secondary" id="skip">How to play</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="eyebrow">The problem</div>
+      <div class="stat"><b>40.3%</b><span>of the $643M in fraud losses reported to the CAFC in 2024 came from Canadians 60+ (Farina, 2026).</span></div>
+      <div class="stat"><b>5% to 10%</b><span>of fraud is ever reported, so the real losses are likely in the billions (CAFC, 2026).</span></div>
+      <div class="stat"><b>~40%</b><span>of Ontario's $193.5M reported losses (Jan to Sep 2025) were taken from seniors (OMERS, 2026).</span></div>
+      <div class="stat"><b>0 mentions</b><span>of older adults or trusted contacts in Canada's 2026 National Anti-Fraud Strategy discussion paper (Department of Finance Canada, 2026a).</span></div>
+    </div>
+  </section>`);
+  document.getElementById("go").onclick = screenPersonas;
+  document.getElementById("skip").onclick = screenHowTo;
+}
+
+function screenHowTo() {
+  render(`
+  <div class="panel">
+    <h2>How to play</h2>
+    <div class="grid2">
+      <div>
+        <h3>Each year</h3>
+        <ol>
+          <li>Read what scammers are doing this year.</li>
+          <li>Choose measures (cards) within your budget. Unspent points carry over.</li>
+          <li>Commit, then see what happened to Margaret, Raj, Denise and Walter.</li>
+        </ol>
+        <h3>Reading a card</h3>
+        <p><span class="lvl Events">Iceberg: Events</span> <span class="lvl Patterns">Patterns</span> <span class="lvl Structures">Structures</span> <span class="lvl Mental">Mental models</span><br>
+        <span class="small muted">Where the measure acts on Meadows' iceberg. Deeper levels have more leverage but are slower.</span></p>
+        <p class="small muted">Each card also shows its Meadows leverage point (#12 is weakest, #1 strongest), whether it is market <i>reallocation</i> or market <i>mending</i> (Beaton &amp; Kennedy, 2021), and how many years it takes to work.</p>
+      </div>
+      <div>
+        <h3>Three numbers to watch</h3>
+        <p><b>True harm</b>: what older Ontarians actually lose. This is what matters, but in the real world nobody can see it well.</p>
+        <p><b>Reported losses</b>: what the public and media see. When you make reporting easier, this number can <i>go up</i> even while true harm falls.</p>
+        <p><b>Public approval</b>: what keeps you in the job. It rewards visible moves, not always effective ones.</p>
+        <h3>Accessibility</h3>
+        <p class="small">Use the buttons at the top for larger text or high contrast. Everything works with a keyboard.</p>
+      </div>
+    </div>
+    <button class="btn" id="go">Meet the people you serve &rarr;</button>
+  </div>`);
+  document.getElementById("go").onclick = screenPersonas;
+}
+
+function screenPersonas() {
+  render(`
+  <div class="panel">
+    <div class="eyebrow">Equity lens &middot; Intersectionality</div>
+    <h2>The people you serve</h2>
+    <p>Age alone doesn't explain scam risk. It interacts with living alone, gender, language, income and where someone lives (Criado Perez, 2019; Creative Reaction Lab, 2018). These four composite personas are built from Canadian research. <b>They are not real interviews</b>: the first measure available to you is a council where real older adults can correct them.</p>
+  </div>
+  <div class="grid4">
+    ${PERSONAS.map(p => `
+      <div class="persona">
+        <div class="who">${avatar(p)}<div><b>${p.name}, ${p.age}</b></div></div>
+        <p class="small">${p.blurb}</p>
+        <div>${p.tags.map(t => `<span class="tag">${t}</span>`).join("")}</div>
+      </div>`).join("")}
+  </div>
+  <div class="row" style="margin-top:1.2rem"><button class="btn" id="go">Start 2027 &rarr;</button></div>`);
+  document.getElementById("go").onclick = () => { S = newState(); screenYear(); };
+}
+
+function hud(ev) {
+  return `
+  <div class="hud">
+    <div class="box"><div class="label">True harm (est.)</div><div class="value">${money(ev.trueHarm)}</div><div class="hint">per year, what people really lose</div></div>
+    <div class="box"><div class="label">Reported losses</div><div class="value">${money(ev.reported)}</div><div class="hint">what the media sees</div></div>
+    <div class="box"><div class="label">Reporting rate</div><div class="value">${pct(ev.rate)}</div><div class="meter"><i style="width:${ev.rate / 0.6 * 100}%"></i></div></div>
+    <div class="box"><div class="label">Public approval</div><div class="value">${Math.round(ev.approval)}%</div><div class="meter"><i style="width:${ev.approval}%"></i></div></div>
+  </div>`;
+}
+
+function cardStatus(c, y) {
+  if (S.picks[c.id] === undefined) return "";
+  const start = startOf(c.id, S.picks);
+  if (start <= y) return `<span class="status active">✓ Active since ${START_YEAR + start}</span>`;
+  if (start > YEARS) return `<span class="status pending">Funded, takes effect after 2031</span>`;
+  return `<span class="status pending">⏳ Takes effect in ${START_YEAR + start}</span>`;
+}
+
+function cardHtml(c, y) {
+  const owned = S.picks[c.id] !== undefined;
+  const sel = S.selected.has(c.id);
+  const late = (y + c.delay) > YEARS;
+  return `
+  <button type="button" class="card ${owned ? "owned" : ""}" data-id="${c.id}" aria-pressed="${sel}" ${owned ? "disabled" : ""}>
+    <div class="top"><div class="name">${c.name}</div><div class="cost" aria-label="Cost ${c.cost} points">${c.cost} pt</div></div>
+    <div>${levelTag(c.level)} <span class="tag">Leverage #${c.lp}: ${c.lpName}</span> <span class="tag">Market ${c.market.toLowerCase()}</span> <span class="tag">${c.delay === 0 ? "Works this year" : "Works in " + c.delay + " yr" + (c.delay > 1 ? "s" : "")}</span></div>
+    <div class="desc">${c.desc}</div>
+    <div class="why">${c.why}</div>
+    ${owned ? cardStatus(c, y) : late ? `<span class="status pending">Too slow to work before 2031</span>` : ""}
+  </button>`;
+}
+
+function spent() { let s = 0; S.selected.forEach(id => s += CARD(id).cost); return s; }
+
+function screenYear() {
+  const y = S.year + 1;
+  const ev = S.history.length ? S.history[S.history.length - 1] : evaluate(0, {});
+  const event = EVENTS[y - 1];
+  const filters = [["all", "All"], ["Events", "Events"], ["Patterns", "Patterns"], ["Structures", "Structures"], ["Mental", "Mental models"]];
+  const list = CARDS.filter(c => S.filter === "all" || c.level === S.filter)
+    .sort((a, b) => (S.picks[a.id] !== undefined) - (S.picks[b.id] !== undefined));
+  render(`
+  <div class="row spread" style="margin-bottom:.6rem">
+    <div><div class="eyebrow">Year ${y} of ${YEARS}</div><h2 style="margin:0">${START_YEAR + y}</h2></div>
+    <div class="muted small">Budget this year: <b>${S.budget} points</b>${S.budget > BUDGET ? " (includes carry-over)" : ""}</div>
+  </div>
+  <div class="event" role="note"><div class="icon" aria-hidden="true">${event.icon}</div><div><b>Scammers adapt:</b> ${event.text}</div></div>
+  ${hud(ev)}
+  <div class="filters" role="group" aria-label="Filter by iceberg level">
+    <span class="small muted">Show:</span>
+    ${filters.map(([k, l]) => `<button type="button" class="chip" data-f="${k}" aria-pressed="${S.filter === k}">${l}</button>`).join("")}
+  </div>
+  <div class="cards">${list.map(c => cardHtml(c, y)).join("")}</div>
+  <div class="commitbar">
+    <div><b id="spent">${spent()}</b> of <b>${S.budget}</b> points selected <span class="muted small" id="selnames"></span></div>
+    <button class="btn" id="commit">Commit ${START_YEAR + y} plan &rarr;</button>
+  </div>`);
+  document.querySelectorAll(".chip").forEach(b => b.onclick = () => { S.filter = b.dataset.f; screenYear(); });
+  document.querySelectorAll(".card").forEach(b => b.onclick = () => toggleCard(b.dataset.id, b));
+  document.getElementById("commit").onclick = commitYear;
+  updateCommit();
+}
+
+function toggleCard(id, el) {
+  const c = CARD(id);
+  if (S.selected.has(id)) S.selected.delete(id);
+  else {
+    if (spent() + c.cost > S.budget) { announce(`Not enough points for ${c.name}.`); el.animate && el.animate([{ transform: "translateX(0)" }, { transform: "translateX(-5px)" }, { transform: "translateX(5px)" }, { transform: "translateX(0)" }], { duration: 220 }); return; }
+    S.selected.add(id);
+  }
+  el.setAttribute("aria-pressed", S.selected.has(id));
+  updateCommit();
+}
+
+function updateCommit() {
+  document.getElementById("spent").textContent = spent();
+  const n = S.selected.size;
+  document.getElementById("selnames").textContent = n ? `(${n} measure${n > 1 ? "s" : ""})` : "(none: you can also save points)";
+  announce(`${spent()} of ${S.budget} points selected.`);
+}
+
+function commitYear() {
+  const y = S.year + 1;
+  S.selected.forEach(id => S.picks[id] = y);
+  S.budget = S.budget - spent() + BUDGET;
+  S.selected = new Set();
+  S.year = y;
+  const ev = evaluate(y, S.picks);
+  S.history.push(ev);
+  screenResults(ev);
+}
+
+function personaStory(p, pe, y) {
+  const top = pe.top[0];
+  if (pe.protection >= 0.4 && top) {
+    const story = p.saved[top.id] || `${CARD(top.id).name} kept ${p.name} safe this year.`;
+    return { kind: "good", text: story };
+  }
+  const harm = p.harm[y - 1];
+  if (pe.protection >= 0.18 && top) return { kind: "warn", text: harm + ` <span class="muted">Partly protected: \u201C${CARD(top.id).name}\u201D limited the damage.</span>` };
+  return { kind: "bad", text: harm };
+}
+
+function insights(ev, prev, y) {
+  const out = [];
+  const base = evaluate(y, {});
+  if (prev && ev.reported > prev.reported * 1.04 && ev.trueHarm < prev.trueHarm) {
+    out.push(["info", `<b>Reported losses went up while true harm fell.</b> More victims are reporting, so you can finally see the problem. In a real ministry, this is the year the headlines turn against you. Stay the course.`]);
+  }
+  const fading = CARDS.filter(c => c.decay && isActive(c.id, y, S.picks) && startOf(c.id, S.picks) < y);
+  if (fading.length) out.push(["warn", `<b>${fading.map(c => c.name).join(" and ")} ${fading.length > 1 ? "are" : "is"} fading.</b> Scammers changed their scripts. Shallow measures need to be bought again and again.`]);
+  const pending = CARDS.filter(c => S.picks[c.id] !== undefined && startOf(c.id, S.picks) > y && startOf(c.id, S.picks) <= YEARS);
+  if (pending.length) out.push(["info", `<b>Delays:</b> ${pending.map(c => `${c.name} (${START_YEAR + startOf(c.id, S.picks)})`).join("; ")}. Meadows warns that delays tempt people to give up on deep fixes too early.`]);
+  if (CARDS.some(c => c.approvalPending && S.picks[c.id] !== undefined && !isActive(c.id, y, S.picks))) out.push(["warn", `<b>Industry pushback.</b> Banks and telcos are lobbying against shared liability. Approval dips until the rule takes effect.`]);
+  const worst = [...ev.personas].sort((a, b) => b.harm - a.harm)[0];
+  const best = [...ev.personas].sort((a, b) => a.harm - b.harm)[0];
+  if (worst.harm - best.harm > 0.35) out.push(["bad", `<b>Equity check:</b> ${personaById(worst.id).name} is far less protected than ${personaById(best.id).name}. Who is your plan leaving behind?`]);
+  const vsBase = 1 - ev.trueHarm / base.trueHarm;
+  out.push([vsBase > 0.3 ? "good" : "info", `Compared with doing nothing, true harm this year is <b>${pct(Math.max(0, vsBase))} lower</b> (${money(Math.max(0, base.trueHarm - ev.trueHarm))} saved).`]);
+  return out;
+}
+
+function lineChart(series, opts) {
+  const W = 640, H = 220, P = { l: 56, r: 14, t: 14, b: 30 };
+  const xs = opts.labels.length;
+  const max = Math.max(...series.flatMap(s => s.data)) * 1.1;
+  const x = i => P.l + (W - P.l - P.r) * (xs === 1 ? 0.5 : i / (xs - 1));
+  const yv = v => H - P.b - (H - P.t - P.b) * (v / max);
+  const ticks = [0, .25, .5, .75, 1].map(f => f * max);
+  let svg = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opts.title)}">`;
+  ticks.forEach(t => { svg += `<line x1="${P.l}" x2="${W - P.r}" y1="${yv(t)}" y2="${yv(t)}" stroke="var(--line)"/><text x="${P.l - 6}" y="${yv(t) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${opts.fmt(t)}</text>`; });
+  opts.labels.forEach((l, i) => { svg += `<text x="${x(i)}" y="${H - 8}" text-anchor="middle" font-size="11" fill="var(--muted)">${l}</text>`; });
+  series.forEach(s => {
+    const pts = s.data.map((v, i) => `${x(i)},${yv(v)}`).join(" ");
+    svg += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="3" ${s.dash ? 'stroke-dasharray="6 5"' : ""} stroke-linejoin="round"/>`;
+    s.data.forEach((v, i) => { svg += `<circle cx="${x(i)}" cy="${yv(v)}" r="3.5" fill="${s.color}"><title>${s.name} ${opts.labels[i]}: ${opts.fmt(v)}</title></circle>`; });
+  });
+  svg += `</svg><div class="legend">${series.map(s => `<span><i style="background:${s.color}"></i>${s.name}</span>`).join("")}</div>`;
+  return svg;
+}
+
+function trendCharts() {
+  const ys = [0, ...S.history.map(h => h.y)];
+  const evs = [evaluate(0, {}), ...S.history];
+  const labels = ys.map(y => String(START_YEAR + y));
+  const base = ys.map(y => evaluate(y, {}).trueHarm);
+  return `
+  <div class="grid2">
+    <div class="panel"><h3>True harm vs doing nothing</h3>
+      ${lineChart([{ name: "Your plan", color: "var(--accent)", data: evs.map(e => e.trueHarm) }, { name: "Do nothing", color: "#8a93a6", dash: true, data: base }], { labels, fmt: money, title: "True harm by year" })}
+    </div>
+    <div class="panel"><h3>What the public sees</h3>
+      ${lineChart([{ name: "Reported losses", color: "#24476e", data: evs.map(e => e.reported) }], { labels, fmt: money, title: "Reported losses by year" })}
+    </div>
+  </div>`;
+}
+
+function screenResults(ev) {
+  const y = ev.y;
+  const prev = S.history.length > 1 ? S.history[S.history.length - 2] : evaluate(0, {});
+  const last = y === YEARS;
+  render(`
+  <div class="eyebrow">Results &middot; ${START_YEAR + y}</div>
+  <h2>What happened in ${START_YEAR + y}</h2>
+  ${hud(ev)}
+  ${insights(ev, prev, y).map(([k, t]) => `<div class="callout ${k}">${t}</div>`).join("")}
+  <div class="grid4" style="margin:1rem 0">
+    ${PERSONAS.map(p => {
+      const pe = ev.personas.find(x => x.id === p.id);
+      const st = personaStory(p, pe, y);
+      const r = riskLabel(pe.harm);
+      return `<div class="persona">
+        <div class="who">${avatar(p)}<div><b>${p.name}, ${p.age}</b><br><span class="risk ${r}">${r} risk</span> <span class="small muted">${pct(pe.protection)} protected</span></div></div>
+        <div class="callout ${st.kind}" style="margin:0">${st.text}</div>
+      </div>`;
+    }).join("")}
+  </div>
+  ${trendCharts()}
+  <div class="row"><button class="btn" id="next">${last ? "See your five-year debrief" : "Plan " + (START_YEAR + y + 1)} &rarr;</button></div>`);
+  document.getElementById("next").onclick = last ? () => screenDebrief("result") : screenYear;
+  announce(`Results for ${START_YEAR + y}. True harm ${money(ev.trueHarm)}.`);
+}
+
+/* ===================== DEBRIEF ===================== */
+
+function cumulative(picks) {
+  let t = 0;
+  for (let y = 1; y <= YEARS; y++) t += evaluate(y, picks).trueHarm;
+  return t;
+}
+
+function grade() {
+  const final = S.history[YEARS - 1];
+  const base = evaluate(YEARS, {});
+  const red = 1 - final.trueHarm / base.trueHarm;
+  const gap = Math.max(...final.personas.map(p => p.harm)) - Math.min(...final.personas.map(p => p.harm));
+  const owned = Object.keys(S.picks).map(CARD);
+  const deep = owned.filter(c => c.level === "Structures" || c.level === "Mental").reduce((a, c) => a + c.cost, 0);
+  const shallow = owned.filter(c => c.level === "Events" || c.level === "Patterns").reduce((a, c) => a + c.cost, 0);
+  if (red >= 0.55 && gap < 0.3) return { title: "Systems Shifter", text: "You worked below the waterline and nobody was left far behind. This is what a systems-level response looks like." };
+  if (red >= 0.45) return { title: "Structural Reformer", text: "You changed the rules and the money flows. Check the equity gap: someone is still much less protected than the others." };
+  if (final.approval >= 60 && red < 0.35) return { title: "Headline Chaser", text: "Approval stayed high, but older Ontarians are still losing most of what they lost before. Visible is not the same as effective." };
+  if (shallow > deep) return { title: "Busy but Shallow", text: "Lots of activity at the tip of the iceberg. Scammers adapted faster than your ads and workshops." };
+  return { title: "Getting There", text: "You moved some structures, but delays and gaps limited the impact. Try funding slow, deep measures earlier." };
+}
+
+function screenDebrief(tab) {
+  const tabs = [["result", "Your five years"], ["toc", "Theory of Change"], ["td", "Transition Design"], ["equity", "Equity lens"], ["frameworks", "Course frameworks"], ["evidence", "Real-world evidence"], ["about", "About & sources"]];
+  render(`
+  <div class="eyebrow">Debrief</div>
+  <h2>From game to systems change</h2>
+  <div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" data-t="${k}" aria-selected="${tab === k}">${l}</button>`).join("")}</div>
+  <div id="tabbody" role="tabpanel"></div>`);
+  document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => screenDebrief(b.dataset.t));
+  const body = document.getElementById("tabbody");
+  const fn = { result: tabResult, toc: tabToC, td: tabTD, equity: tabEquity, frameworks: tabFrameworks, evidence: tabEvidence, about: tabAbout }[tab];
+  body.innerHTML = fn();
+  const again = document.getElementById("again");
+  if (again) again.onclick = () => { S = newState(); screenYear(); };
+}
+
+function tabResult() {
+  const final = S.history[YEARS - 1];
+  const g = grade();
+  const saved = cumulative({}) - cumulative(S.picks);
+  const owned = Object.keys(S.picks).map(CARD);
+  const byLevel = l => owned.filter(c => c.level === l);
+  const unused = CARDS.filter(c => S.picks[c.id] === undefined);
+  const colors = { Events: "var(--lvl-events)", Patterns: "var(--lvl-patterns)", Structures: "var(--lvl-structures)", Mental: "var(--lvl-mental)" };
+  return `
+  <div class="hero">
+    <div class="panel">
+      <div class="eyebrow">Your result</div>
+      <h2>${g.title}</h2>
+      <p>${g.text}</p>
+      <div class="stat"><b>${money(Math.max(0, saved))}</b><span>of harm prevented over five years compared with doing nothing (illustrative).</span></div>
+      <div class="stat"><b>${pct(Math.max(0, 1 - final.trueHarm / evaluate(YEARS, {}).trueHarm))}</b><span>lower true harm in 2031 than the do-nothing path.</span></div>
+      <div class="stat"><b>${pct(final.rate)}</b><span>of scams now reported (started at ${pct(BASE_RATE)}).</span></div>
+      <button class="btn" id="again">Play again with a different strategy</button>
+    </div>
+    <div class="panel">
+      <div class="eyebrow">Where you acted on the iceberg</div>
+      <div class="iceberg">
+        ${["Events", "Patterns", "Structures", "Mental"].map(l => `<div style="background:${colors[l]};color:${l === "Structures" || l === "Mental" ? "#fff" : "var(--ink)"}"><span><b>${LEVELS[l]}</b>${byLevel(l).length ? ": " + byLevel(l).map(c => c.name).join("; ") : ""}</span><b>${byLevel(l).reduce((a, c) => a + c.cost, 0)} pt</b></div>`).join("")}
+      </div>
+      <p class="small muted" style="margin-top:.8rem">Deeper levels have more leverage but are harder and slower to change (Donella Meadows Project, n.d.).</p>
+      ${unused.length ? `<p class="small"><b>Not funded:</b> ${unused.map(c => c.name).join("; ")}.</p>` : ""}
+    </div>
+  </div>
+  <div class="grid4" style="margin-bottom:1rem">
+    ${PERSONAS.map(p => { const pe = final.personas.find(x => x.id === p.id); const r = riskLabel(pe.harm); return `<div class="persona"><div class="who">${avatar(p)}<div><b>${p.name}</b><br><span class="risk ${r}">${r} risk in 2031</span></div></div><p class="small">${pct(pe.protection)} protected. Main protection: ${pe.top[0] ? CARD(pe.top[0].id).name : "none"}.</p></div>`; }).join("")}
+  </div>
+  ${trendCharts()}
+  <div class="panel">
+    <h3>The lesson the numbers are built to show</h3>
+    <p>Ads and workshops are cheap, fast and popular, so they feel productive. But they treat scams as an <i>individual knowledge problem</i>. The model rewards changing the system instead: protective defaults where money leaves (trusted contacts, holds), incentives that put costs on those who can prevent scams (shared liability), information flows that end the silence (shame-free reporting), and community structures that reduce isolation (paid peer educators). That is Meadows' insight: most effort goes into the weakest leverage points because they are the most visible.</p>
+  </div>`;
+}
+
+function tabToC() {
+  const rows = [
+    ["1. Design with older adults", ["Paid Older Adults Scam Resilience Council (newcomer, rural, low-income and 80+ members)", "Co-design and test every measure", "Pay co-designers and share credit"],
+      ["Personas replaced by real voices", "Measures reflect who is most excluded"], ["Uptake rises among the hardest-to-reach groups"], ["Older adults hold decision power in fraud policy"]],
+    ["2. Protective defaults where money leaves", ["Trusted contact + 72-hour pause at Ontario credit unions (FSRA)", "Push Ottawa to add an age lens, trusted contacts and holds to the National Anti-Fraud Strategy", "Champion UK-style shared liability"],
+      ["Credit unions offer a trusted contact by default", "Ontario submission to the federal strategy"], ["Big banks adopt the same rule", "Firms invest in prevention because missed red flags cost them"], ["Scams fail at the moment of payment, for everyone"]],
+    ["3. Close the feedback loop", ["One-tap, shame-free reporting from bank, phone or Safety Line", "Data broken down by age, gender, language and region", "\"It could be anyone\" survivor-led stories"],
+      ["Reporting rises from ~7% toward 25%+", "Reported losses rise at first (expected)"], ["Regulators see which groups and channels are hit", "Measures are targeted using real data"], ["Scams are treated as crimes and system failures, not personal failures"]],
+    ["4. Distributed community network", ["Paid peer educators in Seniors Active Living Centres, in many languages", "\"Check before you pay\" scam line on the existing 24/7 Seniors Safety Line", "Travelling rural drop-ins"],
+      ["A trusted person to ask, in your language, any time", "Less isolation"], ["Peers spread new scam alerts faster than central campaigns"], ["Resilient, connected communities that adapt as scams change"]]
+  ];
+  const assumptions = [
+    "<b>Older adults' own voices are missing.</b> No interviews were possible this term, so the personas are research-based composites. Strategy 1 exists to test and correct them first.",
+    "<b>Firms respond to incentives.</b> UK evidence: after mandatory reimbursement, push-payment fraud fell ~21% as firms invested in prevention (Payment Systems Regulator [PSR], 2026).",
+    "<b>Rules need information to work.</b> In the UK, 49% of victims did not try to get reimbursed and 71% did not know the policy existed (PSR, 2025). So liability only raises reporting here if paired with the Safety Line or one-tap reporting.",
+    "<b>Ontario can lead but not legislate for banks.</b> Credit unions are provincially overseen, while most seniors bank federally. Strategy 2 assumes a provincial pilot can shape the federal strategy that is still being designed (Department of Finance Canada, 2026a).",
+    "<b>Connection protects.</b> Improving well-being may reduce scam susceptibility more than literacy alone (DeLiema &amp; Sur, 2022).",
+    "<b>Reported numbers will get worse before true harm visibly improves.</b> Leaders need to commit to that in advance."
+  ];
+  return `
+  <div class="panel">
+    <div class="eyebrow">Theory of Change (Annie E. Casey Foundation format)</div>
+    <h2>Ontario Scam Resilience Framework</h2>
+    <p class="muted">Read left to right: we take these actions in hopes of making these outcomes possible, to reach the goal.</p>
+    <div class="toc">
+      <div class="head">Strategy</div><div class="head">Activities</div><div class="head">Short-term outcomes</div><div class="head">Interim outcomes</div><div class="head">Long-term outcomes</div>
+      ${rows.map(([s, a, st, im, lt]) => `
+        <div class="cell strat">${s}</div>
+        <div class="cell"><ul>${a.map(x => `<li>${x}</li>`).join("")}</ul></div>
+        <div class="cell"><ul>${st.map(x => `<li>${x}</li>`).join("")}</ul></div>
+        <div class="cell"><ul>${im.map(x => `<li>${x}</li>`).join("")}</ul></div>
+        <div class="cell"><ul>${lt.map(x => `<li>${x}</li>`).join("")}</ul></div>`).join("")}
+      <div class="goal">GOAL: Older adults in Ontario take part in the digital economy safely and confidently, and scam losses are prevented, repaid and never quietly accepted.</div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><h3>Key assumptions</h3><ul>${assumptions.map(a => `<li style="margin-bottom:.5rem">${a}</li>`).join("")}</ul></div>
+    <div class="panel"><h3>Audiences and context</h3>
+      <p><b>Main audience:</b> Ontario's Ministry for Seniors and Accessibility and the Financial Services Regulatory Authority of Ontario (FSRA). <b>Also:</b> the federal Department of Finance (National Anti-Fraud Strategy consultation), credit unions, CARP and seniors' centres.</p>
+      <p><b>Helpful context now:</b> Bill C-15 requires banks to have fraud-prevention policies, let customers turn off risky features and adjust limits, and report fraud data to the FCAC (Department of Finance Canada, 2026b). The federal strategy is still open for input.</p>
+      <p><b>Barriers:</b> industry pushback on liability; the federal strategy is age-blind; AI voice clones and deepfakes make scams more convincing every year; reported losses will rise before falling.</p>
+    </div>
+  </div>`;
+}
+
+function tabTD() {
+  return `
+  <div class="panel">
+    <div class="eyebrow">CMU Transition Design Framework (Irwin, Kossoff &amp; Tonkinwise, 2022)</div>
+    <h2>Four co-evolving areas, applied</h2>
+  </div>
+  <div class="td">
+    <div class="q"><h3>Vision for transition</h3>
+      <p><b>Ontario, 2040:</b> older adults bank, connect and get help online without fear. Every account has a trusted contact by default, a pause before irreversible payments is normal, losses are repaid by whoever could have stopped them, and asking for help carries no shame.</p>
+      <p class="small muted">Steps along the pathway: credit union pilot (2027) &rarr; federal age lens (2029) &rarr; shared liability (2030s) &rarr; scams treated as a public-safety system, not personal failure.</p></div>
+    <div class="q"><h3>Theories of change</h3>
+      <ul>
+        <li><b>Systems thinking:</b> act on deep leverage points (rules, information flows, self-organization, paradigms) and expect delays (Meadows, 1999).</li>
+        <li><b>Market failure:</b> mend the market by moving the cost onto those who can prevent scams (Beaton &amp; Kennedy, 2021).</li>
+        <li><b>Data gap:</b> what is not measured is not designed for (Criado Perez, 2019).</li>
+        <li><b>Well-being:</b> connection may protect more than literacy (DeLiema &amp; Sur, 2022).</li>
+      </ul></div>
+    <div class="q"><h3>Posture &amp; mindset</h3>
+      <ul>
+        <li><b>Humility:</b> I am a 4th-year engineering student, not an older adult, and I could not interview anyone this term. The game says so, and Strategy 1 hands design power to older adults.</li>
+        <li><b>From "helpless senior" to "systems failure":</b> my mother was scammed in her 40s and I was scammed as a computer engineering student. Scams exploit trust and emotion, not age.</li>
+        <li><b>Radical collaboration:</b> banks, telcos, platforms, regulators, police and community groups all hold a piece.</li>
+      </ul></div>
+    <div class="q"><h3>New ways of designing</h3>
+      <ul>
+        <li><b>Solve for multiple issues at once:</b> peer educators deliver safety, digital skills and social connection (multifinality).</li>
+        <li><b>Amplify what exists:</b> builds on Bill C-15, the CSA trusted contact rule, the Seniors Safety Line and Seniors Active Living Centres instead of starting from scratch.</li>
+        <li><b>Long horizons:</b> the game shows why slow, deep measures must start first.</li>
+        <li><b>A game as a design tool:</b> policymakers feel the trade-offs between approval, delay and real harm before committing.</li>
+      </ul></div>
+  </div>`;
+}
+
+function tabEquity() {
+  return `
+  <div class="panel">
+    <div class="eyebrow">Inclusive design lens: Equity</div>
+    <h2>Who does the current system leave out?</h2>
+    <p>"All systems produce what they are designed to produce" (Creative Reaction Lab, 2018). Today's fraud system produces silence, shame and losses that fall almost entirely on victims. Using an equity lens, the question is not "how do we teach seniors?" but "who holds power, and who is at the table?"</p>
+  </div>
+  <div class="grid2">
+    <div class="panel"><h3>Intersections that raise risk</h3>
+      <table><thead><tr><th>Persona</th><th>Intersection</th><th>What generic measures miss</th></tr></thead><tbody>
+        <tr><td>Margaret</td><td>80+, widowed woman, lives alone</td><td>Women more often outlive partners and live alone; isolation means no one to check with</td></tr>
+        <tr><td>Raj</td><td>Newcomer, limited English</td><td>English/French-only ads and workshops; scams arrive in his language first</td></tr>
+        <tr><td>Denise</td><td>Confident, recently retired</td><td>"Only vulnerable people get scammed" messaging; shame stops her from reporting</td></tr>
+        <tr><td>Walter</td><td>Low income, rural, branch closing</td><td>Online-only help; no in-person bank staff to notice red flags</td></tr>
+      </tbody></table>
+    </div>
+    <div class="panel"><h3>Power and data</h3>
+      <ul>
+        <li><b>Power:</b> banks, telcos and regulators decide which transactions are flagged and who repays. Older adults are designed <i>for</i>, not <i>with</i> (Aye, 2017). Strategy 1 pays them to co-design.</li>
+        <li><b>Data gap:</b> with only 5% to 10% of fraud reported, and data rarely broken down by gender, language or region, the system cannot see who it is failing (Criado Perez, 2019).</li>
+        <li><b>The federal strategy is age-blind:</b> its 2026 discussion paper does not mention older adults or trusted contacts (Department of Finance Canada, 2026a).</li>
+        <li><b>The game itself:</b> adjustable text size, high contrast, keyboard play and plain language, following Microsoft's "solve for one, extend to many" (Microsoft Design, 2016).</li>
+      </ul>
+    </div>
+  </div>`;
+}
+
+function tabFrameworks() {
+  const f = [
+    ["Market failure (Beaton & Kennedy, 2021)", "Every card is tagged reallocation or mending. Ads and workshops reallocate resources; liability, trusted contacts and reporting mend the market by fixing who bears the cost and who has the information."],
+    ["Manzini (2015): distributed systems, expert vs diffuse design", "Peer educators and the council are diffuse design supported by experts. The peer network is a distributed system: many small local nodes that adapt faster than one central agency."],
+    ["Buchanan's four orders of design", "1st (symbols): \"Likely spoofed\" call labels. 2nd (things): the game itself. 3rd (actions/services): Safety Line, peer drop-ins, the 72-hour pause. 4th (systems): liability, reporting infrastructure and the federal age lens."],
+    ["Humanity-centred design (Norman, 2022)", "Solve the root issue (systems built for younger users), take a long-term systems view, test and refine (the game), and design with the community (paid council)."],
+    ["Systems thinking tenets (Dzombak et al., 2014)", "Interdependence (banks, telcos, families); regulation (reporting restores feedback); multifinality (peer network); delays (cards that take years); leverage points (every card's Meadows number)."],
+    ["Iceberg model and Meadows' leverage points", "Every card is placed on the iceberg and given its leverage point, from #12 (ads) to #2 (paradigm). The debrief shows where your effort went."],
+    ["Theory of Change (Annie E. Casey Foundation, 2022)", "Four strategies, activities, short-term, interim and long-term outcomes, assumptions and audiences (see the Theory of Change tab)."],
+    ["CMU Transition Design (Irwin et al., 2022)", "Vision, theories of change, posture and mindset, and new ways of designing (see the Transition Design tab)."],
+    ["Inclusive & equity-centred design", "Equity lens, intersectional personas, the data gap, power analysis and an accessible game (see the Equity lens tab)."],
+    ["Wicked problems (Kolko, 2012)", "No single right answer: each persona reacts differently, and the goal is to improve the situation, not to \"solve\" scams."]
+  ];
+  return `<div class="panel"><h2>Course frameworks used</h2><table><thead><tr><th style="width:32%">Framework</th><th>Where it appears</th></tr></thead><tbody>${f.map(([a, b]) => `<tr><td><b>${esc(a)}</b></td><td>${esc(b)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+
+function tabEvidence() {
+  const e = [
+    ["United Kingdom: mandatory reimbursement (Oct 2024)", "Banks must reimburse authorised push-payment scam victims, with costs split 50:50 between sending and receiving firms. An independent evaluation found these scam losses fell about 21% (around £73M a year) in the first year, as firms invested in prevention (PSR, 2026). But 49% of victims did not try to claim and 71% were unaware of the policy (PSR, 2025).", "Shared liability card; the rule that liability only raises reporting when paired with information."],
+    ["Australia: Scams Prevention Framework Act (2025)", "Requires banks, telcos and digital platforms to prevent, detect, disrupt, respond to and report scams, with penalties of up to A$50M (Australian Securities and Investments Commission [ASIC], n.d.; CHOICE, 2025).", "Shows a whole-of-ecosystem law is possible: spoofed-call and verified-advertiser cards."],
+    ["Canada: Bill C-15 and the National Anti-Fraud Strategy (2025 to 2026)", "Banks must have fraud-prevention policies, get consent before turning on features like wire transfers, let customers turn features off and change limits, and report fraud data to the FCAC. The strategy's 2026 discussion paper proposes reimbursement when firms fail their obligations, but does not mention older adults or trusted contacts (Department of Finance Canada, 2026a, 2026b).", "The \"Push Ottawa\" card: a window to add an age lens is open now."],
+    ["Canada: CSA trusted contact rule (Dec 2021)", "Investment firms must take reasonable steps to get a trusted contact person and may place temporary holds when they suspect financial exploitation of a vulnerable client (Canadian Securities Administrators [CSA], 2021). No equivalent mandatory rule covers everyday bank accounts.", "Trusted contact + 72-hour pause card."],
+    ["Canada: FCAC Survey on Banking of Canadians", "Half of Canadians 75+ reported they had not received information from their bank about protecting themselves from fraud and scams (Financial Consumer Agency of Canada [FCAC], 2019).", "Why information flows (Safety Line, reporting) matter."]
+  ];
+  return `<div class="panel"><h2>Real-world evidence behind the cards</h2><table><thead><tr><th style="width:24%">Precedent</th><th>What happened</th><th style="width:24%">Used in the game</th></tr></thead><tbody>${e.map(([a, b, c]) => `<tr><td><b>${esc(a)}</b></td><td>${esc(b)}</td><td>${esc(c)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+
+function tabAbout() {
+  const refs = [
+    "Annie E. Casey Foundation. (2022). <i>Developing a theory of change: Practical theory of change guidance, templates and examples</i>. https://www.aecf.org/resources/theory-of-change",
+    "Australian Securities and Investments Commission. (n.d.). <i>Scams Prevention Framework</i>. https://www.asic.gov.au/regulatory-resources/scams/scams-prevention-framework",
+    "Aye, G. (2017, June 2). Design thinking's big gap: Understanding the role of power. <i>Medium</i>. https://medium.com/greater-good-studio/design-educations-big-gap-understanding-the-role-of-power-1ee1756b7f08",
+    "Beaton, E. E., &amp; Kennedy, E. D. (2021). Responding to failure: The promise of market mending for social enterprise. <i>Public Management Review, 23</i>(5), 641&ndash;664. https://doi.org/10.1080/14719037.2020.1865438",
+    "Buchanan, R. (2001). Design research and the new learning. <i>Design Issues, 17</i>(4), 3&ndash;23.",
+    "Canadian Anti-Fraud Centre. (2026, March 6). <i>Fraud Prevention Month to bring hidden crime into the spotlight</i> [News release]. https://antifraudcentre-centreantifraude.ca/news-nouvelles/2026/2026-03-06-eng.htm",
+    "Canadian Securities Administrators. (2021, July 15). <i>CSA notice of amendments to National Instrument 31-103 to enhance protection of older and vulnerable clients</i>.",
+    "CHOICE. (2025, February 14). <i>New rules force big businesses to combat scams</i>. https://www.choice.com.au/money/banking/everyday-banking/articles/scams-prevention-framework-passes-parliament",
+    "Creative Reaction Lab. (2018). <i>Equity-centered community design field guide</i>.",
+    "Criado Perez, C. (2019). <i>Invisible women: Data bias in a world designed for men</i>. Abrams Press.",
+    "DeLiema, M., &amp; Sur, A. (2022). Simulating well-being and literacy interventions to reduce elder scam susceptibility. <i>Innovation in Aging, 6</i>(Suppl. 1), 185. https://doi.org/10.1093/geroni/igac059.738",
+    "Department of Finance Canada. (2026a). <i>National Anti-Fraud Strategy discussion paper</i>. https://www.canada.ca/en/department-finance/programs/consultations/2026/national-anti-fraud-strategy-discussion-paper.html",
+    "Department of Finance Canada. (2026b, June). <i>Government pre-publishes regulations to prevent fraud and facilitate the next phase of consumer-driven banking</i> [News release]. https://www.canada.ca/en/department-finance/news/2026/06/government-pre-publishes-regulations-to-prevent-fraud-and-facilitate-the-next-phase-of-consumer-driven-banking.html",
+    "Donella Meadows Project. (n.d.). <i>Systems thinking resources</i>. Academy for Systems Change. https://donellameadows.org/systems-thinking-resources/",
+    "Dzombak, R., Mehta, C., Mehta, K., &amp; Bil&eacute;n, S. G. (2014). The relevance of systems thinking in the quest for multifinal social enterprises. <i>Systemic Practice and Action Research, 27</i>(6), 593&ndash;606. https://doi.org/10.1007/s11213-013-9313-9",
+    "Farina, A. (2026, September 10). <i>Clicking into vulnerability: Digital fraud targeting Canadian seniors and the law's lagging response</i>. Canadian Bar Association, Elder Law Section. https://cba.org/sections/elder-law/resources/elderessaywinner2026/",
+    "Financial Consumer Agency of Canada. (2019). <i>Highlights: Key findings from the Survey on Banking of Canadians</i>. https://www.canada.ca/en/financial-consumer-agency/programs/research/highlights-survey-banking-of-canadians.html",
+    "Irwin, T., Kossoff, G., &amp; Tonkinwise, C. (2022). <i>The Transition Design framework</i>. Transition Design Seminar, Carnegie Mellon University. https://transitiondesignseminarcmu.net/the-transition-design-framework/",
+    "Kolko, J. (2012). <i>Wicked problems: Problems worth solving</i>. Austin Center for Design. https://www.wickedproblems.com/1_wicked_problems.php",
+    "Manzini, E. (2015). <i>Design, when everybody designs: An introduction to design for social innovation</i> (R. Coad, Trans.). The MIT Press.",
+    "Meadows, D. H. (1999). <i>Leverage points: Places to intervene in a system</i>. Sustainability Institute. https://donellameadows.org/wp-content/userfiles/Leverage_Points.pdf",
+    "Microsoft Design. (2016). <i>Inclusive Microsoft design</i>. Microsoft. https://www.microsoft.com/design/inclusive/",
+    "Norman, D. (2022, February 26). <i>Humanity-centered versus human-centered design</i>. jnd.org. https://jnd.org/humanity-centered-versus-human-centered-design/",
+    "OMERS. (2026, June 8). <i>Home scams are costing Ontario seniors millions</i>. https://www.omers.com/omers-community/home-scams-are-costing-ontario-seniors-millions",
+    "Payment Systems Regulator. (2025, October). <i>One year on: Impact of APP reimbursement on victims</i>. https://www.psr.org.uk/news-and-updates/latest-news/news/one-year-on-impact-of-app-reimbursement-on-victims/",
+    "Payment Systems Regulator. (2026, July 1). <i>Payment fraud falls by &pound;73m following PSR reimbursement scheme</i>. https://www.psr.org.uk/news-and-updates/latest-news/news/payment-fraud-falls-by-73m-following-psr-reimbursement-scheme/"
+  ];
+  return `
+  <div class="grid2">
+    <div class="panel"><h2>About this model</h2>
+      <p>This is a <b>teaching model, not a forecast</b>. Starting values come from published data: Ontario seniors' reported losses (about $101M a year, from OMERS, 2026) and a 7% reporting rate (CAFC, 2026), which implies roughly $1.45B in true annual harm. Scam threats grow about 5% a year, matching the doubling of reported fraud incidents in Ontario from 2014 to 2024 (OMERS, 2026).</p>
+      <p>Each measure's effect on each persona is a <b>judgment informed by the evidence</b> in the "Real-world evidence" tab, not a measured value. The relationships are what matter: deep measures are slower but stronger, shallow measures fade as scammers adapt, better data improves targeting, shared liability makes firms invest in prevention, and co-design makes everything work better for the people it is meant for.</p>
+      <p><b>Limitations:</b> no interviews with older adults were possible this term; personas are composites; provincial and federal powers are simplified.</p>
+      <p class="small muted">Created by Xiwen (Kevin) Liu for BET 360, University of Waterloo, with AI assistance (Anthropic, 2026) for research and coding.</p>
+    </div>
+    <div class="panel refs"><h2>References</h2>${refs.map(r => `<p>${r}</p>`).join("")}<p>Anthropic. (2026). <i>Claude</i> (November 24 version) [Large language model]. https://claude.ai</p></div>
+  </div>`;
+}
+
+/* ===================== A11Y CONTROLS ===================== */
+
+function savePref(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage may be unavailable */ } }
+function loadPref(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+
+document.querySelectorAll("[data-size]").forEach(b => b.onclick = () => {
+  document.documentElement.classList.remove("size-l", "size-xl");
+  if (b.dataset.size) document.documentElement.classList.add(b.dataset.size);
+  document.querySelectorAll("[data-size]").forEach(x => x.setAttribute("aria-pressed", x === b));
+  savePref("htl-size", b.dataset.size);
+});
+const contrastBtn = document.getElementById("contrastBtn");
+contrastBtn.onclick = () => {
+  const on = document.documentElement.classList.toggle("contrast");
+  contrastBtn.setAttribute("aria-pressed", on);
+  savePref("htl-contrast", on ? "1" : "");
+};
+(function restore() {
+  const size = loadPref("htl-size");
+  if (size) { const b = document.querySelector(`[data-size="${size}"]`); if (b) b.click(); }
+  if (loadPref("htl-contrast") === "1") contrastBtn.click();
+})();
+
+screenIntro();
+</script>
+</body>
+</html>
