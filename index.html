@@ -627,12 +627,12 @@ function screenYear() {
       ? `Nobody could have prepared for this one. From now on, each year comes with a forecast of what might come next.`
       : event.counters.some(id => isActive(id, y, S.picks))
       ? `\u2713 <b>You're ready:</b> ${event.counters.filter(id => isActive(id, y, S.picks)).map(id => CARD(id).name).join(" and ")} is already working, so this trend will do much less damage.`
-      : `<b>Not ready:</b> this trend would have done less damage if ${event.counters.map(id => CARD(id).name).join(" or ")} had already been working.`}</div></div></div>
+      : `<b>Not ready for ${event.label}:</b> only ${event.counters.map(id => CARD(id).name).join(" or ")} counter${event.counters.length > 1 ? "" : "s"} this trend, and neither was working yet.${event.counters.some(id => S.picks[id] !== undefined) ? " (You've funded one; it starts soon.)" : ""}`}</div></div></div>
   ${y < YEARS ? (() => {
     const ready = e => e.counters.some(id => S.picks[id] !== undefined && startOf(id, S.picks) <= y + 1);
     const cands = S.forecast[y + 1].map(i => EVENTS[i]);
-    return `<div class="callout info" role="note"><b>Forecast for ${START_YEAR + y + 1}:</b> analysts expect one of these two trends, but can't say which.
-      <ul style="margin:.4rem 0 .2rem;padding-left:1.2rem">${cands.map(e => `<li>${e.icon} ${e.text}${ready(e) ? " <b style='color:var(--good)'>\u2713 something you funded counters this</b>" : ""}</li>`).join("")}</ul>
+    return `<div class="callout info" role="note"><b>Forecast for next year (${START_YEAR + y + 1}):</b> analysts expect one of these two trends, but can't say which.
+      <ul style="margin:.4rem 0 .2rem;padding-left:1.2rem">${cands.map(e => `<li>${e.icon} ${e.text}${ready(e) ? " <b style='color:var(--good)'>\u2713 you'll be ready for this one</b>" : ""}</li>`).join("")}</ul>
       <span class="small muted">Look for "Counters:" tags on the cards. Most measures take a year to start, so prepare now, spend on today's problem, or find something that covers both.</span></div>`; })() : ""}
   ${hud(ev)}
   <div class="filters" role="group" aria-label="Filter by iceberg level">
@@ -710,7 +710,7 @@ function insights(ev, prev, y) {
   const evNow = eventOf(y);
   if (y === 1) out.push(["info", `<b>Year one:</b> no one could have prepared for this year's trend. The planning screen forecasts two possible trends for next year, so you can try to get ahead.`]);
   else if (readyFor(y - 1, S.picks)) out.push(["good", `<b>You were ready.</b> ${evNow.counters.filter(id => isActive(id, y, S.picks)).map(id => CARD(id).name).join(" and ")} blunted this year's new scam trend, so it never fully took hold.`]);
-  else out.push(["warn", `<b>This year's trend caught Ontario unprepared.</b> Nothing that counters it was working yet, so it will keep doing damage in later years. Systems that anticipate change beat systems that react.`]);
+  else out.push(["warn", `<b>${START_YEAR + y}'s trend (${evNow.label}) caught Ontario unprepared.</b> It is countered only by ${evNow.counters.map(id => CARD(id).name).join(" or ")}, and neither was working yet, so it will keep doing damage in later years.${CARDS.some(c => isActive(c.id, y, S.picks) && EVENTS.some(e => e.counters.includes(c.id))) ? " The counter-measures you do have cover other trends." : ""}`]);
   const fading = CARDS.filter(c => c.decay && isActive(c.id, y, S.picks) && startOf(c.id, S.picks) < y);
   if (fading.length) out.push(["warn", `<b>${fading.map(c => c.name).join(" and ")} ${fading.length > 1 ? "are" : "is"} fading.</b> Scammers changed their scripts. Shallow measures need to be bought again and again.`]);
   const pending = CARDS.filter(c => S.picks[c.id] !== undefined && startOf(c.id, S.picks) > y && startOf(c.id, S.picks) <= YEARS);
