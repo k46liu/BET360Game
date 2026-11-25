@@ -529,36 +529,72 @@ function screenIntro() {
 }
 
 function screenHowTo() {
+  const dot = (p, style) => `<span class="pdot" style="${style}" aria-hidden="true">${p.name[0]}</span>`;
+  const m = PERSONAS[0];
   render(`
   <div class="panel">
-    <h2>How to play</h2>
-    <div class="grid2">
-      <div>
-        <h3>Each year</h3>
-        <ol>
-          <li>Read what scammers are doing this year.</li>
-          <li>Choose measures (cards) within your budget of ${BUDGET} points a year. Unspent points carry over. You can afford only about half of the ${CARDS.length} measures, so choose carefully.</li>
-          <li>Commit, then see what happened to Margaret, Raj, Denise and Walter.</li>
-          <li>A committed year is final, like a real budget. You can still look back at this page, the people you serve and last year's results at any time (the browser back button works too).</li>
-        </ol>
-        <h3>Reading a card</h3>
-        <p><span class="small"><b>Iceberg level:</b></span> <span class="lvl Events">Events</span> <span class="lvl Patterns">Patterns</span> <span class="lvl Structures">Structures</span> <span class="lvl Mental">Mental models</span><br>
-        <span class="small muted">Where the measure acts on Meadows' iceberg. Deeper levels have more leverage but are slower.</span></p>
-        <p class="small"><b>Who it helps:</b> the four circles are Margaret, Raj, Denise and Walter. Solid means it helps that person a lot, faded means some, dashed means little or none.</p>
-        <p class="small muted">Each card also shows its Meadows leverage point (#12 is weakest, #1 strongest), whether it is market <i>reallocation</i> or market <i>mending</i> (Beaton &amp; Kennedy, 2021), and how many years it takes to work.</p>
-      </div>
-      <div>
-        <h3>Three numbers to watch</h3>
-        <p><b>True harm</b>: what older Ontarians actually lose. This is what matters, but in the real world nobody can see it well.</p>
-        <p><b>Reported losses</b>: what the public and media see. When you make reporting easier, this number can <i>go up</i> even while true harm falls.</p>
-        <p><b>Public approval</b>: what keeps you in the job. It rewards visible moves, not always effective ones. Below ${APPROVAL_LOW}%, your next budget drops by 1 point; above ${APPROVAL_HIGH}%, it rises by 1.</p>
-        <p class="small muted">Scam trends arrive in a different order every game, and each year you get an uncertain forecast: two possible trends for next year, only one of which will happen. Measures that counter it have to be working <i>before</i> it arrives, so you'll often choose between today's problem and next year's. Measures that counter two trends are worth a lot.</p>
-        <h3>Accessibility</h3>
-        <p class="small">Use the buttons at the top for larger text or high contrast. Everything works with a keyboard.</p>
-      </div>
+    <div class="eyebrow">How to play</div>
+    <h2>Five years, ${BUDGET} points a year, and never enough for everything</h2>
+    <p><b>Your goal:</b> cut the real harm scams do to older Ontarians by 2031, without leaving anyone behind. There are ${CARDS.length} measures and you can afford only about half of them.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <h3>1. Each year</h3>
+      <ol class="small" style="padding-left:1.2rem;margin:0">
+        <li><b>Read this year's scam trend</b> (the dark banner) and the <b>forecast</b> for next year.</li>
+        <li><b>Pick measures</b> (cards) up to your budget. Unspent points carry over.</li>
+        <li><b>Commit.</b> See what happened to Margaret, Raj, Denise and Walter, and to the numbers below.</li>
+      </ol>
+      <p class="small muted" style="margin-top:.6rem">A committed year is final, like a real budget. You can always look back at this page, the people you serve and last year's results (links at the top of each planning screen, or the browser back button).</p>
     </div>
-    <div class="row">${resumeBtn()}<button class="btn ${S ? "secondary" : ""}" id="go">Meet the people you serve${S ? "" : " &rarr;"}</button></div>
-  </div>`);
+
+    <div class="panel">
+      <h3>2. Your budget</h3>
+      <p class="small"><b>${BUDGET} points a year</b>, plus anything you saved.</p>
+      <p class="small"><b>Approval changes it:</b> below ${APPROVAL_LOW}% approval, next year's budget drops by 1 point. Above ${APPROVAL_HIGH}%, it rises by 1. Deep reforms often cost approval at first, so sometimes a popular move buys the room you need.</p>
+    </div>
+
+    <div class="panel">
+      <h3>3. Reading a card</h3>
+      <ul class="small" style="padding-left:1.1rem;margin:0">
+        <li><b>Cost</b> in points (top right), and <b>Works this year</b> or <b>Works in 1 to 2 yrs</b>. Slow measures cost now and pay off later.</li>
+        <li><b>Iceberg level:</b> <span class="lvl Events">Events</span> <span class="lvl Patterns">Patterns</span> <span class="lvl Structures">Structures</span> <span class="lvl Mental">Mental models</span>. Deeper means more leverage but slower change.</li>
+        <li><span class="tag" style="border-color:var(--accent)">Counters: voice clones</span> The scam trends this measure prepares you for. Only 6 cards have one.</li>
+        <li><b>Helps:</b> ${dot(m, `background:${m.color};color:#fff`)} a lot &nbsp; ${dot(m, `background:${m.color}55;color:var(--ink)`)} some &nbsp; ${dot(m, "background:transparent;color:var(--muted);border:1px dashed var(--line)")} little or none, for each of the four people.</li>
+        <li><b>Can't combine with:</b> the voluntary bank code and shared liability are opposite approaches. Pick one.</li>
+        <li>Also shown: Meadows leverage point (#12 weakest, #1 strongest) and market reallocation vs mending (Beaton &amp; Kennedy, 2021).</li>
+      </ul>
+      <p class="small muted" style="margin-top:.5rem">Some cards fade each year as scammers adapt (ads, workshops, the app). Some multiply others: the council (+20% to measures funded after it) and one-tap reporting (+15% from the next year).</p>
+    </div>
+
+    <div class="panel">
+      <h3>4. Scam trends and the forecast</h3>
+      <p class="small">Every year scammers adapt with a new trend, in a different order each game. Each planning screen <b>forecasts two possible trends for next year</b>; only one will happen.</p>
+      <p class="small"><b>Being ready:</b> if a measure that counters a trend is <i>already working</i> when it arrives, that trend does about half the damage and barely lingers. If not, it keeps doing damage in later years. Most measures take a year to start, so you are often choosing between today's problem and next year's. Measures that counter two trends are worth a lot.</p>
+      <p class="small muted">Year one can't be prepared for. The final year has no forecast, and slow measures funded then won't work before the game ends.</p>
+    </div>
+
+    <div class="panel">
+      <h3>5. Three numbers to watch</h3>
+      <p class="small"><b>True harm:</b> what older Ontarians really lose. This is your score, but in the real world nobody can see it well.</p>
+      <p class="small"><b>Reported losses:</b> what the media sees. Making reporting easier can make this number <i>go up</i> while true harm falls.</p>
+      <p class="small"><b>Public approval:</b> it rewards visible moves, not always effective ones, and it changes your budget.</p>
+      <p class="small muted">Expect deep fixes to look worse before they look better: "behavior grows better before it grows worse" for quick fixes, and the reverse for deep ones (Senge, 1990).</p>
+    </div>
+
+    <div class="panel">
+      <h3>6. How you're judged</h3>
+      <p class="small">At the end of 2031 you get one of five results, based on how far true harm fell compared with doing nothing, and how evenly the four people are protected:</p>
+      <p class="small"><b>Systems Shifter</b> &middot; Structural Reformer &middot; Getting There &middot; Busy but Shallow &middot; Headline Chaser</p>
+      <p class="small muted">The top result needs depth <i>and</i> equity. Watch the equity check after each year: no single measure protects everyone.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="small" style="margin:0"><b>Accessibility:</b> use the buttons at the top for larger text or high contrast. Everything works with a keyboard.</p>
+  </div>
+  <div class="row">${resumeBtn()}<button class="btn ${S ? "secondary" : ""}" id="go">Meet the people you serve${S ? "" : " &rarr;"}</button></div>`);
   document.getElementById("go").onclick = () => go("people");
   bindResume();
 }
@@ -1107,7 +1143,8 @@ function tabAbout() {
     "OMERS. (2026, June 8). <i>Home scams are costing Ontario seniors millions</i>. https://www.omers.com/omers-community/home-scams-are-costing-ontario-seniors-millions",
     "Ooi, L. L., Liu, L., Roberts, K. C., Gari&eacute;py, G., &amp; Capaldi, C. A. (2023). Social isolation, loneliness and positive mental health among older adults in Canada during the COVID-19 pandemic. <i>Health Promotion and Chronic Disease Prevention in Canada, 43</i>(4), 171&ndash;181. https://doi.org/10.24095/hpcdp.43.4.02",
     "Payment Systems Regulator. (2025, October). <i>One year on: Impact of APP reimbursement on victims</i>. https://www.psr.org.uk/news-and-updates/latest-news/news/one-year-on-impact-of-app-reimbursement-on-victims/",
-    "Payment Systems Regulator. (2026, July 1). <i>Payment fraud falls by &pound;73m following PSR reimbursement scheme</i>. https://www.psr.org.uk/news-and-updates/latest-news/news/payment-fraud-falls-by-73m-following-psr-reimbursement-scheme/"
+    "Payment Systems Regulator. (2026, July 1). <i>Payment fraud falls by &pound;73m following PSR reimbursement scheme</i>. https://www.psr.org.uk/news-and-updates/latest-news/news/payment-fraud-falls-by-73m-following-psr-reimbursement-scheme/",
+    "Senge, P. M. (1990). <i>The fifth discipline: The art and practice of the learning organization</i>. Currency Doubleday."
   ];
   return `
   <div class="grid2">
