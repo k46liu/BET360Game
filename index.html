@@ -392,11 +392,11 @@ const CARDS = [
 ];
 
 const EVENTS = [
-  { id: "voice", counters: ["pause", "calls"], icon: "☎", text: "AI voice cloning makes \"grandparent scams\" sound exactly like family.", mult: { margaret: 1.25, walter: 1.1 } },
-  { id: "branch", counters: ["peers", "line"], icon: "\u{1F3E6}", text: "Bank branches close across rural Ontario. More seniors are pushed online, often with a stranger's \"help\".", mult: { walter: 1.3, margaret: 1.05 } },
-  { id: "deepfake", counters: ["adsverify", "liability"], icon: "\u{1F4F1}", text: "Deepfake celebrity investment ads flood social media.", mult: { denise: 1.4, raj: 1.15 } },
-  { id: "impersonation", counters: ["calls", "line"], icon: "\u{1F310}", text: "Scammers impersonate the CRA and Service Canada in dozens of languages.", mult: { raj: 1.35, walter: 1.1 } },
-  { id: "giftcards", counters: ["liability", "pause"], icon: "\u{1F4B3}", text: "As banks tighten up, scammers shift to gift cards and crypto ATMs.", mult: { margaret: 1.1, raj: 1.1, denise: 1.1, walter: 1.1 } }
+  { id: "voice", label: "voice clones", counters: ["pause", "calls"], icon: "☎", text: "AI voice cloning makes \"grandparent scams\" sound exactly like family.", mult: { margaret: 1.25, walter: 1.1 } },
+  { id: "branch", label: "branch closures", counters: ["peers", "line"], icon: "\u{1F3E6}", text: "Bank branches close across rural Ontario. More seniors are pushed online, often with a stranger's \"help\".", mult: { walter: 1.3, margaret: 1.05 } },
+  { id: "deepfake", label: "deepfake ads", counters: ["adsverify", "liability"], icon: "\u{1F4F1}", text: "Deepfake celebrity investment ads flood social media.", mult: { denise: 1.4, raj: 1.15 } },
+  { id: "impersonation", label: "government impersonation", counters: ["calls", "line"], icon: "\u{1F310}", text: "Scammers impersonate the CRA and Service Canada in dozens of languages.", mult: { raj: 1.35, walter: 1.1 } },
+  { id: "giftcards", label: "gift cards & crypto ATMs", counters: ["liability", "pause"], icon: "\u{1F4B3}", text: "As banks tighten up, scammers shift to gift cards and crypto ATMs.", mult: { margaret: 1.1, raj: 1.1, denise: 1.1, walter: 1.1 } }
 ];
 
 const BANKISH = ["pause", "calls", "adsverify", "report"];
@@ -537,7 +537,7 @@ function screenHowTo() {
         <p><b>True harm</b>: what older Ontarians actually lose. This is what matters, but in the real world nobody can see it well.</p>
         <p><b>Reported losses</b>: what the public and media see. When you make reporting easier, this number can <i>go up</i> even while true harm falls.</p>
         <p><b>Public approval</b>: what keeps you in the job. It rewards visible moves, not always effective ones. Below ${APPROVAL_LOW}%, your next budget drops by 1 point; above ${APPROVAL_HIGH}%, it rises by 1.</p>
-        <p class="small muted">Scam trends arrive in a different order every game, so a strategy that worked once may not work again.</p>
+        <p class="small muted">Scam trends arrive in a different order every game, and each year you get a forecast of next year's trend. Measures that counter it have to be working <i>before</i> it arrives, so you'll often choose between today's problem and next year's. Measures that counter two trends are worth a lot.</p>
         <h3>Accessibility</h3>
         <p class="small">Use the buttons at the top for larger text or high contrast. Everything works with a keyboard.</p>
       </div>
@@ -592,7 +592,7 @@ function cardHtml(c, y) {
   return `
   <button type="button" class="card ${owned || blockedBy ? "owned" : ""}" data-id="${c.id}" aria-pressed="${sel}" ${owned || blockedBy ? "disabled" : ""}>
     <div class="top"><div class="name">${c.name}</div><div class="cost" aria-label="Cost ${c.cost} points">${c.cost} pt</div></div>
-    <div>${levelTag(c.level)} <span class="tag">Leverage #${c.lp}: ${c.lpName}</span> <span class="tag">Market ${c.market.toLowerCase()}</span> <span class="tag">${c.delay === 0 ? "Works this year" : "Works in " + c.delay + " yr" + (c.delay > 1 ? "s" : "")}</span></div>
+    <div>${levelTag(c.level)} ${EVENTS.filter(e => e.counters.includes(c.id)).map(e => `<span class="tag" style="border-color:var(--accent)">Counters: ${e.label}</span>`).join(" ")} <span class="tag">Leverage #${c.lp}: ${c.lpName}</span> <span class="tag">Market ${c.market.toLowerCase()}</span> <span class="tag">${c.delay === 0 ? "Works this year" : "Works in " + c.delay + " yr" + (c.delay > 1 ? "s" : "")}</span></div>
     <div class="desc">${c.desc}</div>
     <div class="why">${c.why}</div>
     ${c.excludes && !owned ? `<span class="status pending" data-excl>${blockedBy ? "Blocked: you chose " + blockedBy.name.toLowerCase() : "Can't combine with: " + CARD(c.excludes).name.toLowerCase()}</span>` : ""}
@@ -614,9 +614,15 @@ function screenYear() {
     <div><div class="eyebrow">Year ${y} of ${YEARS}</div><h2 style="margin:0">${START_YEAR + y}</h2></div>
     <div class="muted small" style="text-align:right">Budget this year: <b>${S.budget} points</b><br>${BUDGET} base${S.carry ? ` + ${S.carry} saved` : ""}${S.bonus > 0 ? " + 1 for high approval" : S.bonus < 0 ? " &minus; 1 for low approval" : ""}</div>
   </div>
-  <div class="event" role="note"><div class="icon" aria-hidden="true">${event.icon}</div><div><b>Scammers adapt:</b> ${event.text}<div class="small" style="opacity:.9;margin-top:.35rem">${event.counters.some(id => isActive(id, y, S.picks))
+  <div class="event" role="note"><div class="icon" aria-hidden="true">${event.icon}</div><div><b>This year, scammers adapt:</b> ${event.text}<div class="small" style="opacity:.9;margin-top:.35rem">${y === 1
+      ? `Nobody could have prepared for this one. From now on, each year comes with a forecast of next year's trend.`
+      : event.counters.some(id => isActive(id, y, S.picks))
       ? `\u2713 <b>You're ready:</b> ${event.counters.filter(id => isActive(id, y, S.picks)).map(id => CARD(id).name).join(" and ")} is already working, so this trend will do much less damage.`
-      : `<b>Not ready:</b> this trend would have done less damage if ${event.counters.map(id => CARD(id).name).join(" or ")} had already been working. Funding one now still helps later, once it starts.`}</div></div></div>
+      : `<b>Not ready:</b> this trend would have done less damage if ${event.counters.map(id => CARD(id).name).join(" or ")} had already been working.`}</div></div></div>
+  ${y < YEARS ? (() => { const nx = eventOf(y + 1); const set = nx.counters.filter(id => S.picks[id] !== undefined && startOf(id, S.picks) <= y + 1);
+    return `<div class="callout ${set.length ? "good" : "warn"}" role="note"><b>Forecast for ${START_YEAR + y + 1}:</b> ${nx.text} ${set.length
+      ? `\u2713 You're covered: ${set.map(id => CARD(id).name).join(" and ")} will be working.`
+      : `To be ready, fund <b>${nx.counters.map(id => CARD(id).name).join("</b> or <b>")}</b> this year (most take a year to start). Or spend on today's problem and accept the risk.`}</div>`; })() : ""}
   ${hud(ev)}
   <div class="filters" role="group" aria-label="Filter by iceberg level">
     <span class="small muted">Show:</span>
@@ -691,7 +697,8 @@ function insights(ev, prev, y) {
     out.push(["info", `<b>Reported losses went up while true harm fell.</b> More victims are reporting, so you can finally see the problem. In a real ministry, this is the year the headlines turn against you. Stay the course.`]);
   }
   const evNow = eventOf(y);
-  if (readyFor(y - 1, S.picks)) out.push(["good", `<b>You were ready.</b> ${evNow.counters.filter(id => isActive(id, y, S.picks)).map(id => CARD(id).name).join(" and ")} blunted this year's new scam trend, so it never fully took hold.`]);
+  if (y === 1) out.push(["info", `<b>Year one:</b> no one could have prepared for this year's trend. Next year's trend is forecast on the planning screen, so you can get ahead of it.`]);
+  else if (readyFor(y - 1, S.picks)) out.push(["good", `<b>You were ready.</b> ${evNow.counters.filter(id => isActive(id, y, S.picks)).map(id => CARD(id).name).join(" and ")} blunted this year's new scam trend, so it never fully took hold.`]);
   else out.push(["warn", `<b>This year's trend caught Ontario unprepared.</b> Nothing that counters it was working yet, so it will keep doing damage in later years. Systems that anticipate change beat systems that react.`]);
   const fading = CARDS.filter(c => c.decay && isActive(c.id, y, S.picks) && startOf(c.id, S.picks) < y);
   if (fading.length) out.push(["warn", `<b>${fading.map(c => c.name).join(" and ")} ${fading.length > 1 ? "are" : "is"} fading.</b> Scammers changed their scripts. Shallow measures need to be bought again and again.`]);
