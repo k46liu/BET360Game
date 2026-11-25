@@ -2,11 +2,11 @@
 
 ## Thread title
 
-Hold the Line: A Scam Resilience Simulation for Ontario Policymakers (Scam Vulnerability Among Older Adults)
+TrustFall: A Scam Resilience Simulation for Ontario Policymakers (Scam Vulnerability Among Older Adults)
 
 ## Context paragraph
 
-Ontario seniors lost about 40% of the $193.5 million in fraud reported in the province in the first nine months of 2025, yet only 5% to 10% of fraud is ever reported and Canada's new National Anti-Fraud Strategy discussion paper does not mention older adults at all (Canadian Anti-Fraud Centre, 2026; Department of Finance Canada, 2026; OMERS, 2026). Instead of another awareness campaign, I built *Hold the Line*, a browser-based policy simulation in which provincial decision-makers fund measures at different levels of the iceberg model and discover that popular, shallow moves fade while systems-level changes, such as trusted contacts with transfer holds, UK-style shared liability and shame-free reporting, reduce real harm (Meadows, 1999; Payment Systems Regulator, 2026). It applies an equity lens through four intersectional personas, a paid co-design council of older adults and an accessible interface, so players see who each policy leaves behind (Creative Reaction Lab, 2018; Criado Perez, 2019). The debrief maps the player's strategy onto a Theory of Change and the CMU Transition Design framework (Annie E. Casey Foundation, 2022; Irwin et al., 2022).
+Ontario seniors lost about 40% of the $193.5 million in fraud reported in the province in the first nine months of 2025, yet only 5% to 10% of fraud is ever reported and Canada's new National Anti-Fraud Strategy discussion paper does not mention older adults at all (Canadian Anti-Fraud Centre, 2026; Department of Finance Canada, 2026; OMERS, 2026). Instead of another awareness campaign, I built *TrustFall*, a browser-based policy simulation in which provincial decision-makers fund measures at different levels of the iceberg model and discover that popular, shallow moves fade while systems-level changes, such as trusted contacts with transfer holds, UK-style shared liability and shame-free reporting, reduce real harm (Meadows, 1999; Payment Systems Regulator, 2026). It applies an equity lens through four intersectional personas, a paid co-design council of older adults and an accessible interface, so players see who each policy leaves behind (Creative Reaction Lab, 2018; Criado Perez, 2019). The debrief maps the player's strategy onto a Theory of Change and the CMU Transition Design framework (Annie E. Casey Foundation, 2022; Irwin et al., 2022).
 
 ## References
 

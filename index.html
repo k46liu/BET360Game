@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hold the Line: A Scam Resilience Simulation for Ontario</title>
+<title>TrustFall: A Scam Resilience Simulation for Ontario</title>
 <meta name="description" content="A systems-level policy simulation on scam vulnerability among older adults in Ontario. BET 360 final product by Xiwen (Kevin) Liu.">
 <style>
   :root {
@@ -193,7 +193,7 @@
 </head>
 <body>
 <header class="topbar">
-  <div class="brand">Hold the Line <span>A scam resilience simulation for Ontario</span></div>
+  <div class="brand">TrustFall <span>A scam resilience simulation for Ontario</span></div>
   <div class="a11y" role="group" aria-label="Display options">
     <span aria-hidden="true">Text</span>
     <button type="button" data-size="" aria-pressed="true" aria-label="Normal text size">A</button>
@@ -462,7 +462,7 @@ function screenIntro() {
   <section class="hero">
     <div class="panel">
       <div class="eyebrow">BET 360 final product &middot; Systems-level simulation</div>
-      <h1>Hold the Line</h1>
+      <h1>TrustFall</h1>
       <p style="font-size:1.1rem">It is January 2027. You have just been appointed to lead Ontario's new <b>Scam Resilience Task Force</b>. Your job: reduce the harm scams cause older adults over the next five years.</p>
       <p>You have <b>${BUDGET} policy points a year</b>. Every measure costs points, some take years to work, and the ones that look best in the news are not always the ones that work best.</p>
       <p>You will see the results through four Ontarians whose risks are different, because exclusion is never one-size-fits-all.</p>
@@ -974,18 +974,18 @@ document.querySelectorAll("[data-size]").forEach(b => b.onclick = () => {
   document.documentElement.classList.remove("size-l", "size-xl");
   if (b.dataset.size) document.documentElement.classList.add(b.dataset.size);
   document.querySelectorAll("[data-size]").forEach(x => x.setAttribute("aria-pressed", x === b));
-  savePref("htl-size", b.dataset.size);
+  savePref("trustfall-size", b.dataset.size);
 });
 const contrastBtn = document.getElementById("contrastBtn");
 contrastBtn.onclick = () => {
   const on = document.documentElement.classList.toggle("contrast");
   contrastBtn.setAttribute("aria-pressed", on);
-  savePref("htl-contrast", on ? "1" : "");
+  savePref("trustfall-contrast", on ? "1" : "");
 };
 (function restore() {
-  const size = loadPref("htl-size");
+  const size = loadPref("trustfall-size");
   if (size) { const b = document.querySelector(`[data-size="${size}"]`); if (b) b.click(); }
-  if (loadPref("htl-contrast") === "1") contrastBtn.click();
+  if (loadPref("trustfall-contrast") === "1") contrastBtn.click();
 })();
 
 screenIntro();

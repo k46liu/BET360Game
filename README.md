@@ -1,4 +1,4 @@
-# Hold the Line
+# TrustFall
 
 A systems-level policy simulation about scam vulnerability among older adults in Ontario. BET 360 (Designing Transitions and Inclusion) final product, University of Waterloo, by Xiwen (Kevin) Liu.
 
@@ -15,7 +15,7 @@ Open `index.html` in any modern browser. It is one self-contained file with no n
 From this folder, with the `gcloud` CLI signed in to your project:
 
 ```bash
-gcloud run deploy hold-the-line \
+gcloud run deploy trustfall \
   --source . \
   --region northamerica-northeast2 \
   --allow-unauthenticated \
@@ -28,7 +28,7 @@ gcloud run deploy hold-the-line \
 To take it down after grading:
 
 ```bash
-gcloud run services delete hold-the-line --region northamerica-northeast2
+gcloud run services delete trustfall --region northamerica-northeast2
 ```
 
 ## Files
