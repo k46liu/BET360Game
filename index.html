@@ -614,7 +614,7 @@ function cardHtml(c, y) {
 }
 
 function whoHelps(c) {
-  if (c.id === "council") return `<div class="who-helps small"><span class="muted">Helps:</span> everyone indirectly (makes later measures 20% stronger)</div>`;
+  if (c.id === "council") return `<div class="who-helps small"><span class="muted">Helps:</span> ${PERSONAS.map(p => `<span class="pdot" style="background:transparent;color:var(--muted);border:1px dashed var(--line)" title="${p.name}: no direct effect" aria-label="${p.name}: no direct effect">${p.name[0]}</span>`).join("")} <span class="muted">no one directly, but every measure funded this year or later helps everyone 20% more</span></div>`;
   const eff = c.effWithPause ? c.effWithPause : c.eff;
   const level = v => v >= 0.12 ? "a lot" : v >= 0.06 ? "some" : "little";
   const dots = PERSONAS.map(p => {
