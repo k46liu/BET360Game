@@ -216,7 +216,9 @@
 
 const START_YEAR = 2026;
 const YEARS = 5;               // 2027 to 2031
-const BUDGET = 5;              // policy points per year, unspent points carry over
+const BUDGET = 3;              // policy points per year, unspent points carry over
+const APPROVAL_LOW = 35;       // below this, next year's budget drops by 1 point
+const APPROVAL_HIGH = 65;      // above this, next year's budget rises by 1 point
 const BASE_TRUE_HARM = 1.45e9; // est. true annual losses of Ontario adults 60+ (reported ~$101M / ~7% reporting)
 const BASE_REPORTED = 101e6;   // ~40% of Ontario's ~$258M annualized reported losses (OMERS, 2026)
 const BASE_RATE = 0.07;        // CAFC: only 5% to 10% of fraud is reported
@@ -225,13 +227,13 @@ const PERSONAS = [
   { id: "margaret", name: "Margaret", age: 81, color: "#c2563a",
     blurb: "Widowed, lives alone in Peterborough. Landline and a tablet her grandson set up. Banks at a local credit union.",
     tags: ["Lives alone", "Woman, 80+", "Phone scams"],
-    harm: [
-      "A crying \"grandson\" (an AI voice clone) called from a \"police station\". She withdrew $9,000 for a courier and told no one.",
-      "A \"bank investigator\" convinced her to move her savings to a \"safe account\". She lost $14,000.",
-      "The same scammers called back offering to \"recover\" her losses for a fee. She paid $2,500.",
-      "She stopped answering her phone at all, including calls from her doctor's office.",
-      "An online \"friend\" from her tablet asked for gift cards to visit her. She bought $1,200 worth."
-    ],
+    harm: {
+      voice: "A crying \"grandson\" (an AI voice clone) called from a \"police station\". She withdrew $9,000 for a courier and told no one.",
+      branch: "With her branch's hours cut, a \"bank investigator\" convinced her by phone to move her savings to a \"safe account\". She lost $14,000.",
+      deepfake: "An online \"friend\" she met through a video ad on her tablet asked for gift cards to come visit. She bought $1,200 worth.",
+      impersonation: "A \"Service Canada\" caller said her pension was suspended. She paid a $1,500 \"reactivation fee\".",
+      giftcards: "Scammers called back offering to \"recover\" her earlier losses. She paid $2,500 in gift cards."
+    },
     saved: {
       pause: "A \"grandson\" called about bail. Her credit union paused the $9,000 transfer and phoned her daughter, her trusted contact. Scam stopped.",
       peers: "At Tuesday drop-in her peer educator had just practised \"hang up and call back\". She called her real grandson. He was at school.",
@@ -245,13 +247,13 @@ const PERSONAS = [
   { id: "raj", name: "Raj", age: 72, color: "#2f7d5b",
     blurb: "Moved to Brampton to live near his daughter. More comfortable in Punjabi than English. Uses WhatsApp daily. Banks at a big bank.",
     tags: ["Language barrier", "Newcomer", "Messaging scams"],
-    harm: [
-      "English-only TV warnings went over his head. A caller \"from his daughter's bank\" got his card PIN and took $2,000.",
-      "A \"CRA officer\" threatened arrest in Punjabi. He paid $3,500 in gift cards.",
-      "A WhatsApp investment group promised 20% monthly returns. He put in $6,000.",
-      "A Punjabi WhatsApp message from \"Service Canada\" asked him to \"verify\" his pension. They emptied his account.",
-      "Too embarrassed to tell his daughter, he stopped using his phone for banking and anything else."
-    ],
+    harm: {
+      voice: "A cloned voice of his daughter asked for money after a \"car accident\". He sent $4,000.",
+      branch: "English-only warnings went over his head. A caller \"from his daughter's bank\" got his card PIN and took $2,000.",
+      deepfake: "A WhatsApp investment group, promoted by a deepfake video, promised 20% monthly returns. He put in $6,000.",
+      impersonation: "A Punjabi WhatsApp message from \"Service Canada\" asked him to \"verify\" his pension. They emptied his account.",
+      giftcards: "A \"CRA officer\" threatened arrest in Punjabi. He paid $3,500 in gift cards."
+    },
     saved: {
       line: "He called the Safety Line and had a Punjabi interpreter within two minutes. It was a scam.",
       peers: "His Punjabi-speaking peer group at the community centre had seen the same \"CRA\" script the week before.",
@@ -266,13 +268,13 @@ const PERSONAS = [
   { id: "denise", name: "Denise", age: 68, color: "#7a4fa0",
     blurb: "Recently retired nurse in Ottawa. Confident online. \"I'd never fall for a scam.\" Investments and a big bank.",
     tags: ["Tech-confident", "Overconfidence", "Investment & romance scams"],
-    harm: [
-      "A dating-app match she had never met asked for $2,000 for a \"medical emergency\". She sent it.",
-      "She tapped a fake Canada Post text and her card was used for $1,800.",
-      "A deepfake video of a famous Canadian promoted a crypto platform. She invested $25,000.",
-      "The fake platform showed \"profits\" and asked for more to withdraw them. She added $15,000.",
-      "Ashamed, she didn't report it, so the platform kept running and found others."
-    ],
+    harm: {
+      voice: "A cloned voice of her nephew needed bail money. She wired $3,000 before thinking to call her sister.",
+      branch: "Banking fully online now, she tapped a fake Canada Post text and her card was used for $1,800.",
+      deepfake: "A deepfake video of a famous Canadian promoted a crypto platform. She invested $25,000.",
+      impersonation: "A fake \"bank fraud team\" call got her to approve a $7,000 transfer to \"secure\" her account.",
+      giftcards: "The fake crypto platform demanded \"fees\" in crypto to release her \"profits\". She added $15,000."
+    },
     saved: {
       adsverify: "The deepfake investment ad never reached her feed: the advertiser could not pass verification.",
       stories: "After hearing a retired doctor describe being scammed, she paused and checked with her sister first.",
@@ -285,13 +287,13 @@ const PERSONAS = [
   { id: "walter", name: "Walter", age: 77, color: "#b7791f",
     blurb: "Lives on a small pension and the Guaranteed Income Supplement in rural Northern Ontario. Patchy internet. His credit union branch is closing.",
     tags: ["Low income", "Rural", "Door & phone scams"],
-    harm: [
-      "A door-to-door \"furnace inspector\" charged $4,000 for work that was never done.",
-      "His branch closed. A \"helpful\" stranger offered to set up his online banking, then drained it.",
-      "A caller offered a \"government energy rebate\" if he paid a $500 \"processing fee\".",
-      "He lost his GIS deposit to a fake \"Service Canada\" text.",
-      "Scammers sold his number as an \"easy target\". The calls doubled."
-    ],
+    harm: {
+      voice: "A cloned voice of his son asked for help paying a fine. He sent $1,500, a month of his income.",
+      branch: "His branch closed. A \"helpful\" stranger offered to set up his online banking, then drained it.",
+      deepfake: "A Facebook ad for a \"seniors' energy rebate\" took his card number and $500.",
+      impersonation: "He lost his GIS deposit to a fake \"Service Canada\" text.",
+      giftcards: "A door-to-door \"furnace inspector\" demanded $4,000, paid in gift cards from the corner store."
+    },
     saved: {
       pause: "His credit union held the unusual withdrawal and called his neighbour, his trusted contact.",
       peers: "The seniors' centre van now brings a peer educator to his town every week. He checked the \"rebate\" offer there first.",
@@ -338,7 +340,7 @@ const CARDS = [
     desc: "Formally ask the federal government to add trusted contacts, temporary holds and age-disaggregated data to the strategy, which does not currently mention older adults.",
     why: "Most seniors bank with federally regulated banks. Ontario can pilot rules at credit unions, but it needs Ottawa to scale them. Much stronger once the credit union pause exists: it carries that rule to the big banks most seniors use." },
   { id: "liability", name: "Shared liability: firms reimburse when they miss red flags", cost: 4, delay: 2, level: "Structures", lp: 5, lpName: "Rules (incentives)",
-    market: "Mending", order: 4, approval: 3, approvalPending: -6,
+    market: "Mending", order: 4, approval: 3, approvalPending: -6, excludes: "code",
     eff: { margaret: .18, raj: .16, denise: .20, walter: .16 }, report: .04,
     desc: "Champion a UK-style rule: banks, telcos and platforms that miss clear warning signs share the cost of reimbursing victims.",
     why: "In the UK, mandatory reimbursement (2024) cut push-payment fraud by about 21% in year one as banks invested in prevention. It puts the cost on those who can prevent the scam. Expect industry pushback." },
@@ -362,6 +364,26 @@ const CARDS = [
     eff: { margaret: .05, raj: .06, denise: .12, walter: .04 }, report: .06,
     desc: "Victims of all ages (students, engineers, nurses, retirees) tell their own stories. Message: scams are crimes, not character flaws.",
     why: "Shame keeps victims silent and blames the person, not the system (Farina, 2026). Changing the story raises reporting." },
+  { id: "app", name: "AI scam-detection app for seniors", cost: 2, delay: 0, level: "Events", lp: 12, lpName: "Numbers & parameters",
+    market: "Reallocation", order: 2, approval: 6, decay: 0.6,
+    eff: { margaret: .05, raj: .04, denise: .09, walter: .01 }, report: 0,
+    desc: "Fund a free app that screens calls and texts with AI and warns seniors about likely scams. Big launch event with a tech partner.",
+    why: "A product, not a system change. It needs a smartphone, setup and trust in its alerts, so it misses people like Walter. Scammers test against detectors and adapt." },
+  { id: "penalties", name: "Tougher criminal penalties for fraud against seniors", cost: 2, delay: 1, level: "Structures", lp: 12, lpName: "Numbers & parameters",
+    market: "Reallocation", order: 4, approval: 8,
+    eff: { margaret: .03, raj: .03, denise: .03, walter: .03 }, report: 0,
+    desc: "Lobby for longer sentences and an \"elder fraud\" aggravating factor in the Criminal Code.",
+    why: "Very popular, and CARP has called for it. But many scam operations run from outside Canada and few cases are ever prosecuted, so a longer sentence rarely deters anyone." },
+  { id: "course", name: "Mandatory digital-literacy course for seniors", cost: 2, delay: 0, level: "Patterns", lp: 12, lpName: "Numbers & parameters",
+    market: "Reallocation", order: 3, approval: -4,
+    eff: { margaret: .06, raj: .02, denise: .01, walter: .03 }, report: -.01,
+    desc: "Require older adults to complete an online safety course before they can turn on online banking.",
+    why: "Treats older adults as the problem to fix. Seniors' groups push back, it locks out people like Walter with patchy internet, and it reinforces the \"they can't learn\" belief at the bottom of the iceberg." },
+  { id: "code", name: "Voluntary bank code on scams", cost: 1, delay: 0, level: "Structures", lp: 5, lpName: "Rules (voluntary)",
+    market: "Mending", order: 4, approval: 2, excludes: "liability",
+    eff: { margaret: .06, raj: .05, denise: .06, walter: .05 }, report: 0,
+    desc: "Negotiate a voluntary industry code: banks promise better warnings and faster refunds, at their discretion.",
+    why: "Fast, cheap and industry-friendly. But voluntary codes leave the cost with victims (the UK's voluntary code came before mandatory reimbursement). Choosing it means Ontario won't push for shared liability: you can't fund both." },
   { id: "council", name: "Older Adults Scam Resilience Council (paid co-designers)", cost: 1, delay: 0, level: "Mental", lp: 3, lpName: "Goals",
     market: "Mending", order: 4, approval: 1,
     eff: { margaret: 0, raj: 0, denise: 0, walter: 0 }, report: 0,
@@ -370,11 +392,11 @@ const CARDS = [
 ];
 
 const EVENTS = [
-  { icon: "☎", text: "AI voice cloning makes \"grandparent scams\" sound exactly like family.", mult: { margaret: 1.25, walter: 1.1 } },
-  { icon: "\u{1F3E6}", text: "Bank branches close across rural Ontario. More seniors are pushed online, often with a stranger's \"help\".", mult: { walter: 1.3, margaret: 1.05 } },
-  { icon: "\u{1F4F1}", text: "Deepfake celebrity investment ads flood social media.", mult: { denise: 1.4, raj: 1.15 } },
-  { icon: "\u{1F310}", text: "Scammers impersonate the CRA and Service Canada in dozens of languages.", mult: { raj: 1.35, walter: 1.1 } },
-  { icon: "\u{1F4B3}", text: "As banks tighten up, scammers shift to gift cards and crypto ATMs.", mult: { margaret: 1.1, raj: 1.1, denise: 1.1, walter: 1.1 } }
+  { id: "voice", counters: ["pause", "calls"], icon: "☎", text: "AI voice cloning makes \"grandparent scams\" sound exactly like family.", mult: { margaret: 1.25, walter: 1.1 } },
+  { id: "branch", counters: ["peers", "line"], icon: "\u{1F3E6}", text: "Bank branches close across rural Ontario. More seniors are pushed online, often with a stranger's \"help\".", mult: { walter: 1.3, margaret: 1.05 } },
+  { id: "deepfake", counters: ["adsverify", "liability"], icon: "\u{1F4F1}", text: "Deepfake celebrity investment ads flood social media.", mult: { denise: 1.4, raj: 1.15 } },
+  { id: "impersonation", counters: ["calls", "line"], icon: "\u{1F310}", text: "Scammers impersonate the CRA and Service Canada in dozens of languages.", mult: { raj: 1.35, walter: 1.1 } },
+  { id: "giftcards", counters: ["liability", "pause"], icon: "\u{1F4B3}", text: "As banks tighten up, scammers shift to gift cards and crypto ATMs.", mult: { margaret: 1.1, raj: 1.1, denise: 1.1, walter: 1.1 } }
 ];
 
 const BANKISH = ["pause", "calls", "adsverify", "report"];
@@ -382,17 +404,25 @@ const BANKISH = ["pause", "calls", "adsverify", "report"];
 /* ===================== STATE ===================== */
 
 let S;
+let ORDER = EVENTS.map((e, i) => i);     // which scam trend arrives in which year; shuffled every game
 function newState() {
-  return { year: 0, budget: BUDGET, picks: {}, history: [], selected: new Set(), filter: "all" };
+  ORDER = EVENTS.map((e, i) => i);
+  for (let i = ORDER.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [ORDER[i], ORDER[j]] = [ORDER[j], ORDER[i]]; }
+  return { year: 0, budget: BUDGET, carry: 0, bonus: 0, picks: {}, history: [], selected: new Set(), filter: "all" };
 }
+function eventOf(y) { return EVENTS[ORDER[y - 1]]; }
 
 /* ===================== MODEL ===================== */
 
-function threat(pid, y) {
+function readyFor(i, picks) {                // was a counter-measure already working when this trend arrived?
+  return EVENTS[ORDER[i]].counters.some(id => isActive(id, i + 1, picks));
+}
+function threat(pid, y, picks = {}) {
   let t = Math.pow(1.04, y);                 // reported incidents in Ontario more than doubled 2014 to 2024
-  for (let i = 0; i < y; i++) {               // each year's new tactic hits hardest that year, then settles at half strength
-    const m = EVENTS[i].mult[pid] || 1;
-    t *= (i === y - 1) ? m : 1 + (m - 1) * 0.5;
+  for (let i = 0; i < y; i++) {               // a new tactic hits hardest the year it arrives, then settles in
+    const m = EVENTS[ORDER[i]].mult[pid] || 1;
+    const ready = readyFor(i, picks);         // if you were ready, it never takes hold
+    t *= (i === y - 1) ? 1 + (m - 1) * (ready ? 0.5 : 1) : 1 + (m - 1) * (ready ? 0.2 : 0.5);
   }
   return t;
 }
@@ -415,7 +445,7 @@ function evaluate(y, picks) {
   const personas = PERSONAS.map(p => {
     const reds = CARDS.map(c => ({ id: c.id, r: cardReduction(c, p.id, y, picks) })).filter(x => x.r > 0).sort((a, b) => b.r - a.r);
     const keep = reds.reduce((acc, x) => acc * (1 - x.r), 1);
-    const harm = threat(p.id, y) * keep;
+    const harm = threat(p.id, y, picks) * keep;
     return { id: p.id, harm, protection: 1 - keep, top: reds };
   });
   const avg = personas.reduce((a, p) => a + p.harm, 0) / personas.length;
@@ -494,7 +524,7 @@ function screenHowTo() {
         <h3>Each year</h3>
         <ol>
           <li>Read what scammers are doing this year.</li>
-          <li>Choose measures (cards) within your budget. Unspent points carry over.</li>
+          <li>Choose measures (cards) within your budget of ${BUDGET} points a year. Unspent points carry over. You can afford only about half of the ${CARDS.length} measures, so choose carefully.</li>
           <li>Commit, then see what happened to Margaret, Raj, Denise and Walter.</li>
         </ol>
         <h3>Reading a card</h3>
@@ -506,7 +536,8 @@ function screenHowTo() {
         <h3>Three numbers to watch</h3>
         <p><b>True harm</b>: what older Ontarians actually lose. This is what matters, but in the real world nobody can see it well.</p>
         <p><b>Reported losses</b>: what the public and media see. When you make reporting easier, this number can <i>go up</i> even while true harm falls.</p>
-        <p><b>Public approval</b>: what keeps you in the job. It rewards visible moves, not always effective ones.</p>
+        <p><b>Public approval</b>: what keeps you in the job. It rewards visible moves, not always effective ones. Below ${APPROVAL_LOW}%, your next budget drops by 1 point; above ${APPROVAL_HIGH}%, it rises by 1.</p>
+        <p class="small muted">Scam trends arrive in a different order every game, so a strategy that worked once may not work again.</p>
         <h3>Accessibility</h3>
         <p class="small">Use the buttons at the top for larger text or high contrast. Everything works with a keyboard.</p>
       </div>
@@ -557,12 +588,14 @@ function cardHtml(c, y) {
   const owned = S.picks[c.id] !== undefined;
   const sel = S.selected.has(c.id);
   const late = (y + c.delay) > YEARS;
+  const blockedBy = c.excludes && (S.picks[c.excludes] !== undefined || S.selected.has(c.excludes)) ? CARD(c.excludes) : null;
   return `
-  <button type="button" class="card ${owned ? "owned" : ""}" data-id="${c.id}" aria-pressed="${sel}" ${owned ? "disabled" : ""}>
+  <button type="button" class="card ${owned || blockedBy ? "owned" : ""}" data-id="${c.id}" aria-pressed="${sel}" ${owned || blockedBy ? "disabled" : ""}>
     <div class="top"><div class="name">${c.name}</div><div class="cost" aria-label="Cost ${c.cost} points">${c.cost} pt</div></div>
     <div>${levelTag(c.level)} <span class="tag">Leverage #${c.lp}: ${c.lpName}</span> <span class="tag">Market ${c.market.toLowerCase()}</span> <span class="tag">${c.delay === 0 ? "Works this year" : "Works in " + c.delay + " yr" + (c.delay > 1 ? "s" : "")}</span></div>
     <div class="desc">${c.desc}</div>
     <div class="why">${c.why}</div>
+    ${c.excludes && !owned ? `<span class="status pending" data-excl>${blockedBy ? "Blocked: you chose " + blockedBy.name.toLowerCase() : "Can't combine with: " + CARD(c.excludes).name.toLowerCase()}</span>` : ""}
     ${owned ? cardStatus(c, y) : late ? `<span class="status pending">Too slow to work before 2031</span>` : ""}
   </button>`;
 }
@@ -572,16 +605,16 @@ function spent() { let s = 0; S.selected.forEach(id => s += CARD(id).cost); retu
 function screenYear() {
   const y = S.year + 1;
   const ev = S.history.length ? S.history[S.history.length - 1] : evaluate(0, {});
-  const event = EVENTS[y - 1];
+  const event = eventOf(y);
   const filters = [["all", "All"], ["Events", "Events"], ["Patterns", "Patterns"], ["Structures", "Structures"], ["Mental", "Mental models"]];
   const list = CARDS.filter(c => S.filter === "all" || c.level === S.filter)
     .sort((a, b) => (S.picks[a.id] !== undefined) - (S.picks[b.id] !== undefined));
   render(`
   <div class="row spread" style="margin-bottom:.6rem">
     <div><div class="eyebrow">Year ${y} of ${YEARS}</div><h2 style="margin:0">${START_YEAR + y}</h2></div>
-    <div class="muted small">Budget this year: <b>${S.budget} points</b>${S.budget > BUDGET ? " (includes carry-over)" : ""}</div>
+    <div class="muted small" style="text-align:right">Budget this year: <b>${S.budget} points</b><br>${BUDGET} base${S.carry ? ` + ${S.carry} saved` : ""}${S.bonus > 0 ? " + 1 for high approval" : S.bonus < 0 ? " &minus; 1 for low approval" : ""}</div>
   </div>
-  <div class="event" role="note"><div class="icon" aria-hidden="true">${event.icon}</div><div><b>Scammers adapt:</b> ${event.text}</div></div>
+  <div class="event" role="note"><div class="icon" aria-hidden="true">${event.icon}</div><div><b>Scammers adapt:</b> ${event.text}<div class="small" style="opacity:.85;margin-top:.25rem">Blunted if any of these is already working this year: ${event.counters.map(id => CARD(id).name + (isActive(id, y, S.picks) ? " \u2713" : "")).join(" or ")}.</div></div></div>
   ${hud(ev)}
   <div class="filters" role="group" aria-label="Filter by iceberg level">
     <span class="small muted">Show:</span>
@@ -606,6 +639,15 @@ function toggleCard(id, el) {
     S.selected.add(id);
   }
   el.setAttribute("aria-pressed", S.selected.has(id));
+  if (c.excludes) {                         // lock or unlock the card it can't be combined with
+    const other = document.querySelector(`.card[data-id="${c.excludes}"]`);
+    if (other && S.picks[c.excludes] === undefined) {
+      const on = S.selected.has(id);
+      other.disabled = on; other.classList.toggle("owned", on);
+      const note = other.querySelector("[data-excl]");
+      if (note) note.textContent = on ? "Blocked: you chose " + c.name.toLowerCase() : "Can't combine with: " + c.name.toLowerCase();
+    }
+  }
   updateCommit();
 }
 
@@ -619,11 +661,13 @@ function updateCommit() {
 function commitYear() {
   const y = S.year + 1;
   S.selected.forEach(id => S.picks[id] = y);
-  S.budget = S.budget - spent() + BUDGET;
+  S.carry = S.budget - spent();
   S.selected = new Set();
   S.year = y;
   const ev = evaluate(y, S.picks);
   S.history.push(ev);
+  S.bonus = ev.approval < APPROVAL_LOW ? -1 : ev.approval > APPROVAL_HIGH ? 1 : 0;
+  S.budget = Math.max(0, BUDGET + S.carry + S.bonus);
   screenResults(ev);
 }
 
@@ -633,7 +677,7 @@ function personaStory(p, pe, y) {
     const story = p.saved[top.id] || `${CARD(top.id).name} kept ${p.name} safe this year.`;
     return { kind: "good", text: story };
   }
-  const harm = p.harm[y - 1];
+  const harm = p.harm[eventOf(y).id];
   if (pe.protection >= 0.18 && top) return { kind: "warn", text: harm + ` <span class="muted">Partly protected: \u201C${CARD(top.id).name}\u201D limited the damage.</span>` };
   return { kind: "bad", text: harm };
 }
@@ -644,11 +688,16 @@ function insights(ev, prev, y) {
   if (prev && ev.reported > prev.reported * 1.04 && ev.trueHarm < prev.trueHarm) {
     out.push(["info", `<b>Reported losses went up while true harm fell.</b> More victims are reporting, so you can finally see the problem. In a real ministry, this is the year the headlines turn against you. Stay the course.`]);
   }
+  const evNow = eventOf(y);
+  if (readyFor(y - 1, S.picks)) out.push(["good", `<b>You were ready.</b> ${evNow.counters.filter(id => isActive(id, y, S.picks)).map(id => CARD(id).name).join(" and ")} blunted this year's new scam trend, so it never fully took hold.`]);
+  else out.push(["warn", `<b>This year's trend caught Ontario unprepared.</b> Nothing that counters it was working yet, so it will keep doing damage in later years. Systems that anticipate change beat systems that react.`]);
   const fading = CARDS.filter(c => c.decay && isActive(c.id, y, S.picks) && startOf(c.id, S.picks) < y);
   if (fading.length) out.push(["warn", `<b>${fading.map(c => c.name).join(" and ")} ${fading.length > 1 ? "are" : "is"} fading.</b> Scammers changed their scripts. Shallow measures need to be bought again and again.`]);
   const pending = CARDS.filter(c => S.picks[c.id] !== undefined && startOf(c.id, S.picks) > y && startOf(c.id, S.picks) <= YEARS);
   if (pending.length) out.push(["info", `<b>Delays:</b> ${pending.map(c => `${c.name} (${START_YEAR + startOf(c.id, S.picks)})`).join("; ")}. Meadows warns that delays tempt people to give up on deep fixes too early.`]);
   if (CARDS.some(c => c.approvalPending && S.picks[c.id] !== undefined && !isActive(c.id, y, S.picks))) out.push(["warn", `<b>Industry pushback.</b> Banks and telcos are lobbying against shared liability. Approval dips until the rule takes effect.`]);
+  if (y < YEARS && ev.approval < APPROVAL_LOW) out.push(["bad", `<b>Approval is ${Math.round(ev.approval)}%.</b> The Premier's office cuts your budget by 1 point next year. Deep reforms need political room: what will you trade to win it back?`]);
+  else if (y < YEARS && ev.approval > APPROVAL_HIGH) out.push(["good", `<b>Approval is ${Math.round(ev.approval)}%.</b> You get 1 extra point next year. Will you spend it on what is popular, or on what works?`]);
   const worst = [...ev.personas].sort((a, b) => b.harm - a.harm)[0];
   const best = [...ev.personas].sort((a, b) => a.harm - b.harm)[0];
   if (worst.harm - best.harm > 0.35) out.push(["bad", `<b>Equity check:</b> ${personaById(worst.id).name} is far less protected than ${personaById(best.id).name}. Who is your plan leaving behind?`]);
@@ -734,9 +783,9 @@ function grade() {
   const owned = Object.keys(S.picks).map(CARD);
   const deep = owned.filter(c => c.level === "Structures" || c.level === "Mental").reduce((a, c) => a + c.cost, 0);
   const shallow = owned.filter(c => c.level === "Events" || c.level === "Patterns").reduce((a, c) => a + c.cost, 0);
-  if (red >= 0.55 && gap < 0.3) return { title: "Systems Shifter", text: "You worked below the waterline and nobody was left far behind. This is what a systems-level response looks like." };
+  if (red >= 0.52 && gap < 0.35) return { title: "Systems Shifter", text: "You worked below the waterline and nobody was left far behind. This is what a systems-level response looks like." };
   if (red >= 0.45) return { title: "Structural Reformer", text: "You changed the rules and the money flows. Check the equity gap: someone is still much less protected than the others." };
-  if (final.approval >= 60 && red < 0.35) return { title: "Headline Chaser", text: "Approval stayed high, but older Ontarians are still losing most of what they lost before. Visible is not the same as effective." };
+  if (final.approval >= 50 && red < 0.35) return { title: "Headline Chaser", text: "Approval stayed high, but older Ontarians are still losing most of what they lost before. Visible is not the same as effective." };
   if (shallow > deep) return { title: "Busy but Shallow", text: "Lots of activity at the tip of the iceberg. Scammers adapted faster than your ads and workshops." };
   return { title: "Getting There", text: "You moved some structures, but delays and gaps limited the impact. Try funding slow, deep measures earlier." };
 }
@@ -790,7 +839,7 @@ function tabResult() {
   ${trendCharts()}
   <div class="panel">
     <h3>The lesson the numbers are built to show</h3>
-    <p>Ads and workshops are cheap, fast and popular, so they feel productive. But they treat scams as an <i>individual knowledge problem</i>. The model rewards changing the system instead: protective defaults where money leaves (trusted contacts, holds), incentives that put costs on those who can prevent scams (shared liability), information flows that end the silence (shame-free reporting), and community structures that reduce isolation (paid peer educators). That is Meadows' insight: most effort goes into the weakest leverage points because they are the most visible.</p>
+    <p>Ads, workshops, a shiny app and tougher sentences are cheap, fast and popular, so they feel productive. But they treat scams as an <i>individual knowledge problem</i>. The model rewards changing the system instead: protective defaults where money leaves (trusted contacts, holds), incentives that put costs on those who can prevent scams (shared liability), information flows that end the silence (shame-free reporting), and community structures that reduce isolation (paid peer educators). That is Meadows' insight: most effort goes into the weakest leverage points because they are the most visible.</p>
   </div>`;
 }
 

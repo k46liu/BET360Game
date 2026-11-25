@@ -2,7 +2,7 @@
 
 A systems-level policy simulation about scam vulnerability among older adults in Ontario. BET 360 (Designing Transitions and Inclusion) final product, University of Waterloo, by Xiwen (Kevin) Liu.
 
-The player leads Ontario's new Scam Resilience Task Force from 2027 to 2031. Each year they fund measures with a limited budget and see the results through four intersectional personas. Shallow, popular measures (ads, one-time workshops) fade as scammers adapt; deeper measures (trusted contacts and transfer holds, shared liability, shame-free reporting, paid peer educators, a co-design council) are slower but change the system. The debrief maps the strategy onto the iceberg model, Meadows' leverage points, a Theory of Change, the CMU Transition Design framework and an equity lens.
+The player leads Ontario's new Scam Resilience Task Force from 2027 to 2031. Each year they fund measures with a tight budget (they can afford only about half of the 16 measures), public approval raises or cuts next year's budget, and scam trends arrive in a different order every game. Results show up through four intersectional personas. Shallow, popular measures (ads, workshops, a scam-detection app, tougher sentences) fade or barely work; deeper measures (trusted contacts and transfer holds, shared liability, shame-free reporting, paid peer educators, a co-design council) are slower but change the system. The debrief maps the strategy onto the iceberg model, Meadows' leverage points, a Theory of Change, the CMU Transition Design framework and an equity lens.
 
 The model is illustrative, not a forecast. See "About this model" in the in-game debrief.
 
