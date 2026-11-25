@@ -134,6 +134,8 @@
   .card .name { font-weight: 700; font-size: 1rem; line-height: 1.3; }
   .cost { flex: none; background: var(--ink); color: #fff; border-radius: 8px; padding: .15rem .5rem; font-weight: 700; font-size: .85rem; }
   .card .desc { font-size: .88rem; }
+  .who-helps { display: flex; align-items: center; gap: .3rem; flex-wrap: wrap; }
+  .pdot { width: 24px; height: 24px; border-radius: 50%; display: inline-grid; place-items: center; font-weight: 700; font-size: .72rem; font-family: Georgia, serif; }
   .card .why { font-size: .8rem; color: var(--muted); border-top: 1px dashed var(--line); padding-top: .45rem; }
   .lvl { display: inline-block; font-size: .7rem; font-weight: 700; padding: .12rem .5rem; border-radius: 6px; }
   .lvl.Events { background: var(--lvl-events); color: #1f2a44; }
@@ -539,6 +541,7 @@ function screenHowTo() {
         <h3>Reading a card</h3>
         <p><span class="small"><b>Iceberg level:</b></span> <span class="lvl Events">Events</span> <span class="lvl Patterns">Patterns</span> <span class="lvl Structures">Structures</span> <span class="lvl Mental">Mental models</span><br>
         <span class="small muted">Where the measure acts on Meadows' iceberg. Deeper levels have more leverage but are slower.</span></p>
+        <p class="small"><b>Who it helps:</b> the four circles are Margaret, Raj, Denise and Walter. Solid means it helps that person a lot, faded means some, dashed means little or none.</p>
         <p class="small muted">Each card also shows its Meadows leverage point (#12 is weakest, #1 strongest), whether it is market <i>reallocation</i> or market <i>mending</i> (Beaton &amp; Kennedy, 2021), and how many years it takes to work.</p>
       </div>
       <div>
@@ -602,11 +605,24 @@ function cardHtml(c, y) {
   <button type="button" class="card ${owned || blockedBy ? "owned" : ""}" data-id="${c.id}" aria-pressed="${sel}" ${owned || blockedBy ? "disabled" : ""}>
     <div class="top"><div class="name">${c.name}</div><div class="cost" aria-label="Cost ${c.cost} points">${c.cost} pt</div></div>
     <div>${levelTag(c.level)} ${EVENTS.filter(e => e.counters.includes(c.id)).map(e => `<span class="tag" style="border-color:var(--accent)">Counters: ${e.label}</span>`).join(" ")} <span class="tag">Leverage #${c.lp}: ${c.lpName}</span> <span class="tag">Market ${c.market.toLowerCase()}</span> <span class="tag">${c.delay === 0 ? "Works this year" : "Works in " + c.delay + " yr" + (c.delay > 1 ? "s" : "")}</span></div>
+    ${whoHelps(c)}
     <div class="desc">${c.desc}</div>
     <div class="why">${c.why}</div>
     ${c.excludes && !owned ? `<span class="status pending" data-excl>${blockedBy ? "Blocked: you chose " + blockedBy.name.toLowerCase() : "Can't combine with: " + CARD(c.excludes).name.toLowerCase()}</span>` : ""}
     ${owned ? cardStatus(c, y) : late ? `<span class="status pending">Too slow to work before 2031</span>` : ""}
   </button>`;
+}
+
+function whoHelps(c) {
+  if (c.id === "council") return `<div class="who-helps small"><span class="muted">Helps:</span> everyone indirectly (makes later measures 20% stronger)</div>`;
+  const eff = c.effWithPause ? c.effWithPause : c.eff;
+  const level = v => v >= 0.12 ? "a lot" : v >= 0.06 ? "some" : "little";
+  const dots = PERSONAS.map(p => {
+    const v = eff[p.id] || 0, l = level(v);
+    const st = l === "a lot" ? `background:${p.color};color:#fff` : l === "some" ? `background:${p.color}55;color:var(--ink)` : `background:transparent;color:var(--muted);border:1px dashed var(--line)`;
+    return `<span class="pdot" style="${st}" title="${p.name}: helps ${l}" aria-label="${p.name}: helps ${l}">${p.name[0]}</span>`;
+  }).join("");
+  return `<div class="who-helps small"><span class="muted">Helps:</span> ${dots}${c.effWithPause ? ` <span class="muted">(once the credit union pause exists)</span>` : ""}</div>`;
 }
 
 function spent() { let s = 0; S.selected.forEach(id => s += CARD(id).cost); return s; }
