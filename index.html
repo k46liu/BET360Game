@@ -510,7 +510,8 @@ function screenIntro() {
       <p>You have <b>${BUDGET} policy points a year</b>. Every measure costs points, some take years to work, and the ones that look best in the news are not always the ones that work best.</p>
       <p>You will see the results through four Ontarians whose risks are different, because exclusion is never one-size-fits-all.</p>
       <div class="row" style="margin-top:1.2rem">
-        <button class="btn" id="go">Meet the people you serve &rarr;</button>
+        ${resumeBtn()}
+        <button class="btn ${S ? "secondary" : ""}" id="go">Meet the people you serve${S ? "" : " &rarr;"}</button>
         <button class="btn secondary" id="skip">How to play</button>
       </div>
     </div>
@@ -522,8 +523,9 @@ function screenIntro() {
       <div class="stat"><b>0 mentions</b><span>of older adults or trusted contacts in Canada's 2026 National Anti-Fraud Strategy discussion paper (Department of Finance Canada, 2026a).</span></div>
     </div>
   </section>`);
-  document.getElementById("go").onclick = screenPersonas;
-  document.getElementById("skip").onclick = screenHowTo;
+  document.getElementById("go").onclick = () => go("people");
+  document.getElementById("skip").onclick = () => go("how");
+  bindResume();
 }
 
 function screenHowTo() {
@@ -537,6 +539,7 @@ function screenHowTo() {
           <li>Read what scammers are doing this year.</li>
           <li>Choose measures (cards) within your budget of ${BUDGET} points a year. Unspent points carry over. You can afford only about half of the ${CARDS.length} measures, so choose carefully.</li>
           <li>Commit, then see what happened to Margaret, Raj, Denise and Walter.</li>
+          <li>A committed year is final, like a real budget. You can still look back at this page, the people you serve and last year's results at any time (the browser back button works too).</li>
         </ol>
         <h3>Reading a card</h3>
         <p><span class="small"><b>Iceberg level:</b></span> <span class="lvl Events">Events</span> <span class="lvl Patterns">Patterns</span> <span class="lvl Structures">Structures</span> <span class="lvl Mental">Mental models</span><br>
@@ -554,9 +557,10 @@ function screenHowTo() {
         <p class="small">Use the buttons at the top for larger text or high contrast. Everything works with a keyboard.</p>
       </div>
     </div>
-    <button class="btn" id="go">Meet the people you serve &rarr;</button>
+    <div class="row">${resumeBtn()}<button class="btn ${S ? "secondary" : ""}" id="go">Meet the people you serve${S ? "" : " &rarr;"}</button></div>
   </div>`);
-  document.getElementById("go").onclick = screenPersonas;
+  document.getElementById("go").onclick = () => go("people");
+  bindResume();
 }
 
 function screenPersonas() {
@@ -574,8 +578,9 @@ function screenPersonas() {
         <div>${p.tags.map(t => `<span class="tag">${t}</span>`).join("")}</div>
       </div>`).join("")}
   </div>
-  <div class="row" style="margin-top:1.2rem"><button class="btn" id="go">Start 2027 &rarr;</button></div>`);
-  document.getElementById("go").onclick = () => { S = newState(); screenYear(); };
+  <div class="row" style="margin-top:1.2rem">${S ? resumeBtn() : `<button class="btn" id="go">Start 2027 &rarr;</button>`}</div>`);
+  if (!S) document.getElementById("go").onclick = () => { S = newState(); go("plan"); };
+  bindResume();
 }
 
 function hud(ev) {
@@ -635,6 +640,12 @@ function screenYear() {
   const list = CARDS.filter(c => S.filter === "all" || c.level === S.filter)
     .sort((a, b) => (S.picks[a.id] !== undefined) - (S.picks[b.id] !== undefined));
   render(`
+  <nav class="row small" style="gap:.5rem;margin-bottom:.8rem" aria-label="Look back">
+    <span class="muted">Look back:</span>
+    <button type="button" class="chip" data-nav="how">How to play</button>
+    <button type="button" class="chip" data-nav="people">The people you serve</button>
+    ${S.history.length ? `<button type="button" class="chip" data-nav="results">${START_YEAR + S.year} results</button>` : ""}
+  </nav>
   <div class="row spread" style="margin-bottom:.6rem">
     <div><div class="eyebrow">Year ${y} of ${YEARS}</div><h2 style="margin:0">${START_YEAR + y}</h2></div>
     <div class="muted small" style="text-align:right">Budget this year: <b>${S.budget} points</b><br>${BUDGET} base${S.carry ? ` + ${S.carry} saved` : ""}${S.bonus > 0 ? " + 1 for high approval" : S.bonus < 0 ? " &minus; 1 for low approval" : ""}</div>
@@ -661,7 +672,8 @@ function screenYear() {
     <div><b id="spent">${spent()}</b> of <b>${S.budget}</b> points selected <span class="muted small" id="selnames"></span></div>
     <button class="btn" id="commit">Commit ${START_YEAR + y} plan &rarr;</button>
   </div>`);
-  document.querySelectorAll(".chip").forEach(b => b.onclick = () => { S.filter = b.dataset.f; screenYear(); });
+  document.querySelectorAll(".chip[data-f]").forEach(b => b.onclick = () => { S.filter = b.dataset.f; screenYear(); });
+  document.querySelectorAll("[data-nav]").forEach(b => b.onclick = () => go(b.dataset.nav));
   document.querySelectorAll(".card").forEach(b => b.onclick = () => toggleCard(b.dataset.id, b));
   document.getElementById("commit").onclick = commitYear;
   updateCommit();
@@ -704,7 +716,7 @@ function commitYear() {
   S.history.push(ev);
   S.bonus = ev.approval < APPROVAL_LOW ? -1 : ev.approval > APPROVAL_HIGH ? 1 : 0;
   S.budget = Math.max(0, BUDGET + S.carry + S.bonus);
-  screenResults(ev);
+  go("results");
 }
 
 function personaStory(p, pe, y) {
@@ -805,8 +817,8 @@ function screenResults(ev) {
     }).join("")}
   </div>
   ${trendCharts()}
-  <div class="row"><button class="btn" id="next">${last ? "See your five-year debrief" : "Plan " + (START_YEAR + y + 1)} &rarr;</button></div>`);
-  document.getElementById("next").onclick = last ? () => screenDebrief("result") : screenYear;
+  <div class="row"><button class="btn" id="next">${last ? "See your five-year debrief" : (S.year === y ? "Plan " : "Back to planning ") + (START_YEAR + y + 1)} &rarr;</button></div>`);
+  document.getElementById("next").onclick = () => { if (last) S.tab = "result"; go(last ? "debrief" : "plan"); };
   announce(`Results for ${START_YEAR + y}. True harm ${money(ev.trueHarm)}.`);
 }
 
@@ -840,12 +852,12 @@ function screenDebrief(tab) {
   <h2>From game to systems change</h2>
   <div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" data-t="${k}" aria-selected="${tab === k}">${l}</button>`).join("")}</div>
   <div id="tabbody" role="tabpanel"></div>`);
-  document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => screenDebrief(b.dataset.t));
+  document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => { S.tab = b.dataset.t; screenDebrief(b.dataset.t); });
   const body = document.getElementById("tabbody");
   const fn = { result: tabResult, iceberg: tabIceberg, toc: tabToC, td: tabTD, equity: tabEquity, frameworks: tabFrameworks, evidence: tabEvidence, about: tabAbout }[tab];
   body.innerHTML = fn();
   const again = document.getElementById("again");
-  if (again) again.onclick = () => { S = newState(); screenYear(); };
+  if (again) again.onclick = () => { S = newState(); go("plan"); };
 }
 
 function tabResult() {
@@ -1132,7 +1144,28 @@ contrastBtn.onclick = () => {
   if (loadPref("trustfall-contrast") === "1") contrastBtn.click();
 })();
 
-screenIntro();
+/* ===================== NAVIGATION ===================== */
+// Screens live at #intro, #how, #people, #plan, #results and #debrief, so the browser back button works.
+// Committed years are final; going back only revisits screens.
+function go(h) { if (location.hash === "#" + h) route(); else location.hash = h; }
+function redirect(h) { location.replace("#" + h); }
+function resumeBtn() {
+  if (!S) return "";
+  if (S.year < YEARS) return `<button class="btn" id="resume">Back to your ${START_YEAR + S.year + 1} plan &rarr;</button>`;
+  return `<button class="btn" id="resume">Back to your debrief &rarr;</button>`;
+}
+function bindResume() { const b = document.getElementById("resume"); if (b) b.onclick = () => go(S.year < YEARS ? "plan" : "debrief"); }
+function route() {
+  const h = location.hash.slice(1) || "intro";
+  if (h === "how") return screenHowTo();
+  if (h === "people") return screenPersonas();
+  if (h === "plan") return S && S.year < YEARS ? screenYear() : redirect(S ? "debrief" : "intro");
+  if (h === "results") return S && S.history.length ? screenResults(S.history[S.history.length - 1]) : redirect("intro");
+  if (h === "debrief") return S && S.year === YEARS ? screenDebrief(S.tab || "result") : redirect(S ? "plan" : "intro");
+  return screenIntro();
+}
+window.addEventListener("hashchange", route);
+route();
 </script>
 </body>
 </html>
