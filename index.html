@@ -698,9 +698,10 @@ function insights(ev, prev, y) {
   if (CARDS.some(c => c.approvalPending && S.picks[c.id] !== undefined && !isActive(c.id, y, S.picks))) out.push(["warn", `<b>Industry pushback.</b> Banks and telcos are lobbying against shared liability. Approval dips until the rule takes effect.`]);
   if (y < YEARS && ev.approval < APPROVAL_LOW) out.push(["bad", `<b>Approval is ${Math.round(ev.approval)}%.</b> The Premier's office cuts your budget by 1 point next year. Deep reforms need political room: what will you trade to win it back?`]);
   else if (y < YEARS && ev.approval > APPROVAL_HIGH) out.push(["good", `<b>Approval is ${Math.round(ev.approval)}%.</b> You get 1 extra point next year. Will you spend it on what is popular, or on what works?`]);
-  const worst = [...ev.personas].sort((a, b) => b.harm - a.harm)[0];
-  const best = [...ev.personas].sort((a, b) => a.harm - b.harm)[0];
-  if (worst.harm - best.harm > 0.35) out.push(["bad", `<b>Equity check:</b> ${personaById(worst.id).name} is far less protected than ${personaById(best.id).name}. Who is your plan leaving behind?`]);
+  const anyActive = CARDS.some(c => c.id !== "council" && isActive(c.id, y, S.picks));
+  if (!anyActive) out.push(["info", `<b>Nothing is working yet.</b> Measures you funded this year start in a later year (see "Works in" on each card), so this year's results are the same as doing nothing.`]);
+  const lp = [...ev.personas].sort((a, b) => a.protection - b.protection);
+  if (anyActive && lp[lp.length - 1].protection - lp[0].protection > 0.3) out.push(["bad", `<b>Equity check:</b> ${personaById(lp[0].id).name} is ${pct(lp[0].protection)} protected while ${personaById(lp[lp.length - 1].id).name} is ${pct(lp[lp.length - 1].protection)}. Who is your plan leaving behind?`]);
   const vsBase = 1 - ev.trueHarm / base.trueHarm;
   out.push([vsBase > 0.3 ? "good" : "info", `Compared with doing nothing, true harm this year is <b>${pct(Math.max(0, vsBase))} lower</b> (${money(Math.max(0, base.trueHarm - ev.trueHarm))} saved).`]);
   return out;
